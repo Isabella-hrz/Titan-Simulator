@@ -2,6 +2,7 @@ local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memej
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 
 local window = library:AddWindow("Sherya Script", {
@@ -17,12 +18,11 @@ local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
 -- Variables
-local autoEquipEnabled = false
-local autoClickEnabled = false
+local autoEnabled = false
 local characterConnection
 local autoClickLoop = false
 
--- Equipar herramienta "Golpe"
+-- Equipar "Golpe"
 local function equipGolpeTool()
     local backpack = player:WaitForChild("Backpack")
     local character = player.Character or player.CharacterAdded:Wait()
@@ -32,7 +32,7 @@ local function equipGolpeTool()
     end
 end
 
--- Quitar herramienta
+-- Quitar "Golpe"
 local function unequipGolpeTool()
     local character = player.Character or player.CharacterAdded:Wait()
     local tool = character:FindFirstChild("Golpe")
@@ -41,53 +41,45 @@ local function unequipGolpeTool()
     end
 end
 
--- AutoGolpe con delay (interno)
-local function startAutoGolpe()
+-- Autoclick con click virtual
+local function startVirtualAutoClick()
     autoClickLoop = true
     task.spawn(function()
         while autoClickLoop do
-            if UserInputService:GetFocusedTextBox() then
-                task.wait(0.5) -- espera mientras escribes
-            else
-                local character = player.Character
-                if character then
-                    local tool = character:FindFirstChild("Golpe")
-                    if tool and tool:IsA("Tool") then
-                        tool:Activate()
-                    end
-                end
-                task.wait(0.3) -- tiempo entre golpes (ajústalo si es necesario)
+            if not UserInputService:GetFocusedTextBox() then
+                -- Click virtual sin mover mouse
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
             end
+            task.wait(0.3) -- Cambia esto si quieres más rápido o más lento
         end
     end)
 end
 
--- Detener autoGolpe
-local function stopAutoGolpe()
+local function stopVirtualAutoClick()
     autoClickLoop = false
 end
 
--- Al morir
+-- Autoequip después de morir
 local function onCharacterAdded()
-    if autoEquipEnabled then
+    if autoEnabled then
         task.wait(0.5)
         equipGolpeTool()
     end
 end
 
--- Switch final
-mainTab:AddSwitch("Auto Golpe + Equip", function(enabled)
-    autoEquipEnabled = enabled
-    autoClickEnabled = enabled
+-- Switch
+mainTab:AddSwitch("Auto Golpe Seguro", function(enabled)
+    autoEnabled = enabled
 
     if enabled then
         equipGolpeTool()
-        startAutoGolpe()
+        startVirtualAutoClick()
         characterConnection = player.CharacterAdded:Connect(onCharacterAdded)
         print("AutoGolpe activado")
     else
         unequipGolpeTool()
-        stopAutoGolpe()
+        stopVirtualAutoClick()
         if characterConnection then
             characterConnection:Disconnect()
             characterConnection = nil
