@@ -231,45 +231,59 @@ miscTab:AddButton("Anti AFK", function()
     print("Anti-AFK activado correctamente.")
 end)
 
-local autoFarmJugadores = false
+local autoStomp = false
+local stompToolName = "Stomp"
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 
-killerTab:AddSwitch("Auto Farm Jugadores", function(state)
-    autoFarmJugadores = state
+-- Función para buscar y equipar la herramienta Stomp
+local function equipStomp()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local backpack = player:WaitForChild("Backpack")
+
+    if character:FindFirstChildOfClass("Tool") and character:FindFirstChildOfClass("Tool").Name == stompToolName then
+        return -- Ya está equipada
+    end
+
+    local stompTool = backpack:FindFirstChild(stompToolName)
+    if stompTool then
+        stompTool.Parent = character
+    end
+end
+
+-- Auto equipar después de morir
+player.CharacterAdded:Connect(function()
+    if autoStomp then
+        task.wait(1)
+        equipStomp()
+    end
+end)
+
+-- Crear interruptor en Elerium
+killerTab:AddSwitch("Auto Pisotear", function(state)
+    autoStomp = state
 
     task.spawn(function()
-        while autoFarmJugadores do
+        while autoStomp do
             pcall(function()
-                for _, otherPlayer in pairs(game.Players:GetPlayers()) do
-                    if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        otherPlayer.Character.HumanoidRootPart.CFrame =
-                            player.Character.HumanoidRootPart.CFrame + Vector3.new(math.random(-5, 5), 0, math.random(-5, 5))
+                equipStomp()
+
+                local character = player.Character
+                local root = character and character:FindFirstChild("HumanoidRootPart")
+                local tool = character and character:FindFirstChild(stompToolName)
+
+                if tool and root then
+                    for _, otherPlayer in pairs(Players:GetPlayers()) do
+                        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") and otherPlayer.Character:FindFirstChild("Humanoid") and otherPlayer.Character.Humanoid.Health > 0 then
+                            local targetRoot = otherPlayer.Character.HumanoidRootPart
+                            root.CFrame = targetRoot.CFrame + Vector3.new(0, 2, 0) -- Te posiciona justo encima
+                            tool:Activate() -- Hace pisotón
+                            task.wait(0.2)
+                        end
                     end
                 end
             end)
             task.wait(0.5)
-        end
-    end)
-end)
-
-local autoPisotear = false
-
-killerTab:AddSwitch("Auto Pisoteo", function(state)
-    autoPisotear = state
-    task.spawn(function()
-        while autoPisotear do
-            pcall(function()
-                local char = player.Character or player.CharacterAdded:Wait()
-                local backpack = player:WaitForChild("Backpack")
-                local herramienta = char:FindFirstChild("Stomp") or backpack:FindFirstChild("Stomp")
-
-                if herramienta then
-                    if backpack:FindFirstChild("Stomp") then
-                        player.Character.Humanoid:EquipTool(herramienta)
-                    end
-                    herramienta:Activate()
-                end
-            end)
-            task.wait(0.2)
         end
     end)
 end)
