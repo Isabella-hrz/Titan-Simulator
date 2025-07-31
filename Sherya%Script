@@ -28,13 +28,22 @@ local pauseAutoClick = false
 local autoCollectEnabled = false
 local autoCollectLoop
 
--- Equipar herramienta "Golpe"
-local function equipGolpeTool()
+-- Función para equipar, desequipar y equipar rápido "Golpe"
+local function equipAndUnequipGolpe()
     local backpack = player:WaitForChild("Backpack")
     local character = player.Character or player.CharacterAdded:Wait()
+
     local tool = backpack:FindFirstChild("Golpe")
     if tool then
         tool.Parent = character
+        print("Equipando herramienta 'Golpe'...")
+        task.wait(0.1)
+        tool.Parent = backpack
+        task.wait(0.1)
+        tool.Parent = character
+        print("Herramienta 'Golpe' equipada tras reintento.")
+    else
+        print("No se encontró la herramienta 'Golpe' en el backpack.")
     end
 end
 
@@ -69,7 +78,7 @@ end
 local function onCharacterAdded()
     if autoEnabled then
         task.wait(0.5)
-        equipGolpeTool()
+        equipAndUnequipGolpe()
     end
 end
 
@@ -114,12 +123,12 @@ local function stopAutoCollect()
     end
 end
 
--- Switch para activar/desactivar autoclick + equipar
-mainTab:AddSwitch("Auto Golpe", function(enabled)
+-- Switch para activar/desactivar autoclick + equipar con reintento
+mainTab:AddSwitch("Auto Golpe Seguro", function(enabled)
     autoEnabled = enabled
 
     if enabled then
-        equipGolpeTool()
+        equipAndUnequipGolpe()
         startVirtualAutoClick()
         characterConnection = player.CharacterAdded:Connect(onCharacterAdded)
         print("AutoGolpe activado")
@@ -135,7 +144,7 @@ mainTab:AddSwitch("Auto Golpe", function(enabled)
 end)
 
 -- Switch para activar/desactivar auto colección de orbes
-mainTab:AddSwitch("Auto Orbes", function(enabled)
+mainTab:AddSwitch("Auto Coleccionar Orbes", function(enabled)
     if enabled then
         startAutoCollect()
         print("Auto colección de orbes activada")
