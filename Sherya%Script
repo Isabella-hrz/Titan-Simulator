@@ -12,9 +12,31 @@ local window = library:AddWindow("Sherya Script", {
 local mainTab = window:AddTab("Main")
 mainTab:Show()
 
-local autoClick = false
-local clickConnection
+mainTab:AddSwitch("Auto Golpe", function(state)
+    autoClick = state
 
+    if clickConnection then
+        clickConnection:Disconnect()
+        clickConnection = nil
+    end
+
+    if autoClick then
+        local backpack = player:WaitForChild("Backpack")
+        local character = player.Character or player.CharacterAdded:Wait()
+        local tool = backpack:FindFirstChildOfClass("Tool")
+        if tool then
+            tool.Parent = character
+        end
+
+        clickConnection = RunService.Heartbeat:Connect(function()
+            local vim = game:GetService("VirtualInputManager")
+            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        end)
+    end
+end)
+
+-- Auto Atracción Orbes toggle --
 local autoAttract = false
 local attractConnection
 
@@ -24,6 +46,7 @@ end
 
 local function toggleAttract(state)
     autoAttract = state
+
     if autoAttract then
         attractConnection = RunService.Heartbeat:Connect(function()
             local character = player.Character
@@ -50,30 +73,6 @@ local function toggleAttract(state)
     end
 end
 
-mainTab:AddSwitch("Auto Golpe", function(state)
-    autoClick = state
-
-    if autoClick then
-        local backpack = player:WaitForChild("Backpack")
-        local character = player.Character or player.CharacterAdded:Wait()
-        local tool = backpack:FindFirstChildOfClass("Tool")
-        if tool then
-            tool.Parent = character
-        end
-
-        clickConnection = RunService.Heartbeat:Connect(function()
-            local vim = game:GetService("VirtualInputManager")
-            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-        end)
-    else
-        if clickConnection then
-            clickConnection:Disconnect()
-            clickConnection = nil
-        end
-    end
-end)
-
-mainTab:AddSwitch("Auto Orbes", function(state)
+mainTab:AddToggle("Auto Orbes", function(state)
     toggleAttract(state)
 end)
