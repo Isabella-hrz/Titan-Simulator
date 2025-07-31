@@ -153,4 +153,3 @@ mainTab:AddSwitch("Auto Renacimiento", function(state)
         end
     end)
 end)
-
