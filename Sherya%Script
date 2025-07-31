@@ -3,15 +3,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
-local window = library:AddWindow("HavShey VY5", {
+local window = library:AddWindow("𝒮𝒽𝑒𝓇𝓎𝒶 𝒮𝒸𝓇𝒾𝓅𝓉", {
     main_color = Color3.fromRGB(000, 000, 000),
     min_size = Vector2.new(660, 660),
     can_resize = false,
 })
 
-local mainTab = window:AddTab("Farm")
-local statsTab = window:AddTab("Misc")
-local eggsTab = window:AddTab("Farm")
-local miscTab = window:AddTab("Killer")
-local killTab = window:AddTab("Players")
-local playerTab = window:AddTab("Credits")
+local farmTab = window:AddTab("𝐹𝒶𝓇𝓂")
+local miscTab = window:AddTab("𝑀𝒾𝓈𝒸")
+local killerTab = window:AddTab("𝒦𝒾𝓁𝓁𝑒𝓇")
+local playersTab = window:AddTab("𝒫𝓁𝒶𝓎𝑒𝓇𝓈")
+local creaditsTab = window:AddTab("𝒞𝓇𝑒𝒹𝒾𝓉")
