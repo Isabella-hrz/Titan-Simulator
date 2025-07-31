@@ -290,6 +290,11 @@ end)
 
 local selectedPlayer = nil
 
+-- Crear el dropdown vacío
+playersTab:AddDropdown("Seleccionar Jugador", {}, function(value)
+    selectedPlayer = value
+end)
+
 -- Función para actualizar el listado de jugadores
 local function actualizarDropdown()
     local jugadores = {}
@@ -301,22 +306,14 @@ local function actualizarDropdown()
     playersTab:UpdateDropdown("Seleccionar Jugador", jugadores)
 end
 
--- Crear el dropdown inicialmente
-playersTab:AddDropdown("Seleccionar Jugador", {}, function(value)
-    selectedPlayer = value
-end)
-
--- Ejecutar al iniciar
+-- Llenar el dropdown al iniciar
 actualizarDropdown()
 
--- Botón para refrescar jugadores manualmente
-playersTab:AddButton("Refrescar Jugadores", function()
-    actualizarDropdown()
-    library:Notify("Jugadores actualizados")
-end)
+-- Botón para refrescar manualmente
+playersTab:AddButton("🔄 Refrescar Jugadores", actualizarDropdown)
 
--- Ver stats del jugador
-playersTab:AddButton("Ver Stats del Jugador", function()
+-- Ver estadísticas del jugador seleccionado
+playersTab:AddButton("📊 Ver Stats del Jugador", function()
     local p = game.Players:FindFirstChild(selectedPlayer)
     if p and p:FindFirstChild("leaderstats") then
         local stats = p.leaderstats
@@ -324,36 +321,42 @@ playersTab:AddButton("Ver Stats del Jugador", function()
         local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "?"
         local renacer = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
 
-        library:Notify("Stats de "..p.Name..
-            "\n Poder: "..poder..
-            "\n Kills: "..kills..
-            "\n Rebirths: "..renacer)
+        library:Notify("📊 Stats de "..p.Name..
+            "\n💪 Poder: "..poder..
+            "\n☠️ Kills: "..kills..
+            "\n🔁 Rebirths: "..renacer)
     else
-        library:Notify("No se pudo obtener stats del jugador.")
+        library:Notify("❌ No se encontraron stats del jugador seleccionado.")
     end
 end)
 
--- Espectear jugador
-playersTab:AddButton("Espectear", function()
+-- Espectear al jugador seleccionado
+playersTab:AddButton("🎥 Espectear", function()
     local target = game.Players:FindFirstChild(selectedPlayer)
     if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-        workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
-        library:Notify("Ahora estás especteando a "..target.Name)
-    else
-        library:Notify("No se puede espectear al jugador.")
+        workspace.CurrentCamera.CameraSubject = target.Character:FindFirstChild("Humanoid")
+        library:Notify("🎥 Ahora estás especteando a "..target.Name)
     end
 end)
 
--- Teletransportarse al jugador
-playersTab:AddButton("Teletransportarse", function()
-    local p = game.Players:FindFirstChild(selectedPlayer)
-    if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            hrp.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
-            library:Notify("Teletransportado a "..p.Name)
-        end
-    else
-        library:Notify("No se puede teletransportar.")
+-- Dejar de espectear y volver a ti
+playersTab:AddButton("🚶 Dejar de Espectear", function()
+    local lp = game.Players.LocalPlayer
+    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+        workspace.CurrentCamera.CameraSubject = lp.Character:FindFirstChild("Humanoid")
+        library:Notify("🔄 Volviste a ti mismo.")
     end
 end)
+
+-- Teletransportarse al jugador seleccionado
+playersTab:AddButton("🧭 Teletransportarse", function()
+    local p = game.Players:FindFirstChild(selectedPlayer)
+    if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame =
+            p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+        library:Notify("🚀 Te has teletransportado a "..p.Name)
+    else
+        library:Notify("❌ No se pudo teletransportar.")
+    end
+end)
+
