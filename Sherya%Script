@@ -2,6 +2,7 @@ local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memej
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
+local vim = game:GetService("VirtualInputManager")
 
 local window = library:AddWindow("Sherya Script", {
     main_color = Color3.fromRGB(200, 0, 255),
@@ -10,69 +11,49 @@ local window = library:AddWindow("Sherya Script", {
 })
 
 local mainTab = window:AddTab("Main")
-mainTab:Show()
+local miscTab = window:AddTab("Misc")
+local killerTab = window:AddTab("Killer")
+local playersTab = window:AddTab("Players")
+local creaditsTab = window:AddTab("Credits")
 
-mainTab:AddSwitch("Auto Golpe", function(state)
-    autoClick = state
+-- Variables para controlar el autoclick
+local connection
 
-    if clickConnection then
-        clickConnection:Disconnect()
-        clickConnection = nil
+-- Equipar la primera herramienta de la mochila
+local function equipFirstTool()
+    local backpack = player:WaitForChild("Backpack")
+    local character = player.Character or player.CharacterAdded:Wait()
+    local tool = backpack:FindFirstChildOfClass("Tool")
+    if tool then
+        tool.Parent = character
     end
-
-    if autoClick then
-        local backpack = player:WaitForChild("Backpack")
-        local character = player.Character or player.CharacterAdded:Wait()
-        local tool = backpack:FindFirstChildOfClass("Tool")
-        if tool then
-            tool.Parent = character
-        end
-
-        clickConnection = RunService.Heartbeat:Connect(function()
-            local vim = game:GetService("VirtualInputManager")
-            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-        end)
-    end
-end)
-
--- Auto Atracción Orbes toggle --
-local autoAttract = false
-local attractConnection
-
-local function getOrbFolder()
-    return workspace:FindFirstChild("Orbs") or workspace:FindFirstChild("Collectibles")
 end
 
-local function toggleAttract(state)
-    autoAttract = state
+-- Función para activar autoclick
+local function startAutoClick()
+    if connection then return end -- evitar duplicar conexiones
+    connection = RunService.Heartbeat:Connect(function()
+        vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+        vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+    end)
+end
 
-    if autoAttract then
-        attractConnection = RunService.Heartbeat:Connect(function()
-            local character = player.Character
-            if not character then return end
-            local hrp = character:FindFirstChild("HumanoidRootPart")
-            if not hrp then return end
+-- Función para desactivar autoclick
+local function stopAutoClick()
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+end
 
-            local orbFolder = getOrbFolder()
-            if not orbFolder then return end
-
-            for _, orb in pairs(orbFolder:GetChildren()) do
-                if orb:IsA("BasePart") then
-                    local direction = (hrp.Position - orb.Position).Unit
-                    local speed = 50
-                    orb.Velocity = direction * speed
-                end
-            end
-        end)
+-- Agregamos el switch en la pestaña Main
+mainTab:AddSwitch("Auto Golpe", function(enabled)
+    if enabled then
+        equipFirstTool()
+        startAutoClick()
+        print("AutoClick activado")
     else
-        if attractConnection then
-            attractConnection:Disconnect()
-            attractConnection = nil
-        end
+        stopAutoClick()
+        print("AutoClick desactivado")
     end
-end
-
-mainTab:AddToggle("Auto Orbes", function(state)
-    toggleAttract(state)
 end)
