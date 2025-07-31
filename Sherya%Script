@@ -21,8 +21,9 @@ local creaditsTab = window:AddTab("Credits")
 local autoEnabled = false
 local characterConnection
 local autoClickLoop = false
+local clickDelay = 0.1 -- velocidad inicial (en segundos)
 
--- Equipar "Golpe"
+-- Equipar herramienta "Golpe"
 local function equipGolpeTool()
     local backpack = player:WaitForChild("Backpack")
     local character = player.Character or player.CharacterAdded:Wait()
@@ -32,7 +33,7 @@ local function equipGolpeTool()
     end
 end
 
--- Quitar "Golpe"
+-- Quitar herramienta "Golpe"
 local function unequipGolpeTool()
     local character = player.Character or player.CharacterAdded:Wait()
     local tool = character:FindFirstChild("Golpe")
@@ -41,17 +42,15 @@ local function unequipGolpeTool()
     end
 end
 
--- Autoclick con click virtual
+-- Autoclick virtual sin pausa en chat
 local function startVirtualAutoClick()
     autoClickLoop = true
     task.spawn(function()
         while autoClickLoop do
-            if not UserInputService:GetFocusedTextBox() then
-                -- Click virtual sin mover mouse
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-            end
-            task.wait(0.1) -- Cambia esto si quieres más rápido o más lento
+            -- Ya no se verifica si está escribiendo
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            task.wait(clickDelay)
         end
     end)
 end
@@ -60,15 +59,15 @@ local function stopVirtualAutoClick()
     autoClickLoop = false
 end
 
--- Autoequip después de morir
+-- Autoequipar tras morir
 local function onCharacterAdded()
     if autoEnabled then
-        task.wait(0.1)
+        task.wait(0.5)
         equipGolpeTool()
     end
 end
 
--- Switch
+-- Switch para activar/desactivar autoclick + equipar
 mainTab:AddSwitch("Auto Golpe Seguro", function(enabled)
     autoEnabled = enabled
 
@@ -87,3 +86,13 @@ mainTab:AddSwitch("Auto Golpe Seguro", function(enabled)
         print("AutoGolpe desactivado")
     end
 end)
+
+-- Slider para ajustar velocidad entre golpes
+mainTab:AddSlider("Velocidad de Golpe (Delay)", function(value)
+    clickDelay = value
+end, {
+    min = 0.05,
+    max = 1,
+    default = 0.1,
+    suffix = "s"
+})
