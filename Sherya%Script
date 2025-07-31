@@ -17,34 +17,69 @@ local creditsTab = window:AddTab("Credits")
 
 mainTab:Show()
 
-mainTab:AddLabel("Auto Golpe")
-
--- Variable de control para iniciar/detener el autoclick
+-- Auto Golpe --
 local autoClick = false
 
--- Botón para activar el autoclick
-mainTab:AddButton("Activar Auto Golpe", function()
-    autoClick = true
-    local backpack = player:WaitForChild("Backpack")
-    local character = player.Character or player.CharacterAdded:Wait()
+mainTab:AddToggle("Auto Golpe", function(state)
+    autoClick = state
 
-    local tool = backpack:FindFirstChildOfClass("Tool")
-    if tool then
-        tool.Parent = character
-    end
-
-    local vim = game:GetService("VirtualInputManager")
-
-    task.spawn(function()
-        while autoClick do
-            task.wait(0.1)
-            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+    if autoClick then
+        local backpack = player:WaitForChild("Backpack")
+        local character = player.Character or player.CharacterAdded:Wait()
+        local tool = backpack:FindFirstChildOfClass("Tool")
+        if tool then
+            tool.Parent = character
         end
-    end)
+
+        task.spawn(function()
+            local vim = game:GetService("VirtualInputManager")
+            while autoClick do
+                task.wait(0.1)
+                vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+            end
+        end)
+    end
 end)
 
--- Botón para detener el autoclick
-mainTab:AddButton("Detener Auto Golpe", function()
-    autoClick = false
+-- Auto Atracción Orbes --
+local runService = game:GetService("RunService")
+local autoAttract = false
+local connection
+
+local function getOrbFolder()
+    return workspace:FindFirstChild("Orbs") or workspace:FindFirstChild("Collectibles")
+end
+
+local function toggleAttract(state)
+    autoAttract = state
+
+    if autoAttract then
+        connection = runService.Heartbeat:Connect(function()
+            local character = player.Character
+            if not character then return end
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            local orbFolder = getOrbFolder()
+            if not orbFolder then return end
+
+            for _, orb in pairs(orbFolder:GetChildren()) do
+                if orb:IsA("BasePart") then
+                    local direction = (hrp.Position - orb.Position).Unit
+                    local speed = 50
+                    orb.Velocity = direction * speed
+                end
+            end
+        end)
+    else
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+end
+
+mainTab:AddToggle("Auto Orbes", function(state)
+    toggleAttract(state)
 end)
