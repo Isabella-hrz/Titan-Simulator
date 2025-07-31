@@ -159,3 +159,38 @@ mainTab:AddSwitch("Auto Orb", function(enabled)
         print("Auto colección de orbes desactivada")
     end
 end)
+
+local autoRebirth = false
+
+mainTab:AddSwitch("Auto Renacimiento", function(state)
+    autoRebirth = state
+    task.spawn(function()
+        while autoRebirth do
+            pcall(function()
+                local player = game.Players.LocalPlayer
+                local gui = player:WaitForChild("PlayerGui")
+
+                -- Buscar el botón "RENACER"
+                local renacerButton = gui:FindFirstChild("RENACER", true)
+                if renacerButton and renacerButton:IsA("TextButton") then
+                    renacerButton:Activate()
+                    task.wait(0.3)
+                end
+
+                -- Buscar TextBox con texto "Type here"
+                for _, obj in pairs(gui:GetDescendants()) do
+                    if obj:IsA("TextBox") and obj.PlaceholderText and obj.PlaceholderText:lower():find("type here") then
+                        obj.Text = "yes"
+                    end
+                end
+
+                -- Buscar botón "CONFIRMAR"
+                local confirmarBtn = gui:FindFirstChild("CONFIRMAR", true)
+                if confirmarBtn and confirmarBtn:IsA("TextButton") then
+                    confirmarBtn:Activate()
+                end
+            end)
+            task.wait(6) -- espera entre intentos para evitar fallos
+        end
+    end)
+end)
