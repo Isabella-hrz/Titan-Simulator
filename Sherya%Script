@@ -17,134 +17,136 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
+-- MAIN
 local autoGolpe = false
-local player = game.Players.LocalPlayer
-
--- Función que inicia el loop de auto golpe
-local function iniciarAutoGolpe()
+mainTab:AddSwitch("Auto Golpe", function(state)
+    autoGolpe = state
     task.spawn(function()
         while autoGolpe do
             pcall(function()
-                local character = player.Character or player.CharacterAdded:Wait()
-                local backpack = player:WaitForChild("Backpack")
-
-                -- Buscar herramienta
-                local herramienta = character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
-
-                -- Equipar si está en la mochila
-                if herramienta and herramienta.Parent ~= character then
-                    herramienta.Parent = character
-                end
-
-                -- Activar herramienta si está equipada
-                if herramienta and herramienta.Parent == character then
+                local herramienta = player.Character and player.Character:FindFirstChildOfClass("Tool")
+                if herramienta then
                     herramienta:Activate()
                 end
             end)
             task.wait(0.1)
         end
     end)
-end
-
-mainTab:AddSwitch("Auto Golpe", function(state)
-    autoGolpe = state
-
-    if autoGolpe then
-        iniciarAutoGolpe()
-    end
-end)
-
--- Cuando mueres/reapareces, reiniciar el bucle si está activado
-player.CharacterAdded:Connect(function()
-    if autoGolpe then
-        iniciarAutoGolpe()
-    end
 end)
 
 local autoOrb = false
-
-mainTab:AddSwitch("Auto Orb", function(state)
+mainTab:AddSwitch("Auto Orbes", function(state)
     autoOrb = state
-
-    -- Crear GUI solo una vez
-    if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("hehe") then
-        local ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Name = "hehe"
-        ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
-        local lol = Instance.new("TextLabel")
-        lol.Name = "lol"
-        lol.Size = UDim2.new(0, 200, 0, 50)
-        lol.Position = UDim2.new(0.5, -100, 0, 10)
-        lol.BackgroundTransparency = 1
-        lol.TextColor3 = Color3.new(1, 1, 1)
-        lol.Parent = ScreenGui
-    end
-
     task.spawn(function()
         while autoOrb do
-            pcall(function()
-                for _, v in pairs(game.Workspace:GetChildren()) do
-                    if v.Name == "Drop" and v:IsA("BasePart") then
-                        v.CFrame = player.Character.HumanoidRootPart.CFrame
-                    end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("TouchTransmitter") and v.Parent.Name:lower():find("orb") then
+                    firetouchinterest(player.Character.HumanoidRootPart, v.Parent, 0)
+                    firetouchinterest(player.Character.HumanoidRootPart, v.Parent, 1)
                 end
-            end)
-            task.wait(1)
+            end
+            task.wait(0.5)
         end
     end)
 end)
 
-local autoRenacer = false
-
-mainTab:AddSwitch("Auto Renacimiento", function(state)
-    autoRenacer = state
-
+local autoRebirth = false
+mainTab:AddSwitch("Auto Renacer", function(state)
+    autoRebirth = state
     task.spawn(function()
-        while autoRenacer do
+        while autoRebirth do
             pcall(function()
-                -- 1. Clic al botón "RENACER"
-                for _, obj in ipairs(game:GetDescendants()) do
-                    if obj:IsA("TextButton") and string.lower(obj.Text) == "renacer" then
-                        obj:Activate()
-                        break
-                    end
-                end
-
-                task.wait(0.3)
-
-                -- 2. Escribir "Si" en el cuadro de texto
-                local escrito = false
-                for _, obj in ipairs(game:GetDescendants()) do
-                    if obj:IsA("TextBox") and string.lower(obj.PlaceholderText or ""):find("type here") then
-                        obj.Text = "Si"
-                        escrito = true
-                        break
-                    end
-                end
-
-                -- 3. Si "Si" no funciona, intenta "Yes"
-                if not escrito then
-                    for _, obj in ipairs(game:GetDescendants()) do
-                        if obj:IsA("TextBox") and string.lower(obj.PlaceholderText or ""):find("type here") then
-                            obj.Text = "Yes"
-                            break
-                        end
-                    end
-                end
-
-                task.wait(0.2)
-
-                -- 4. Presionar botón "CONFIRMAR"
-                for _, obj in ipairs(game:GetDescendants()) do
-                    if obj:IsA("TextButton") and string.lower(obj.Text) == "confirmar" then
-                        obj:Activate()
-                        break
-                    end
+                local button = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("RebirthUI")
+                if button then
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "R", false, game)
                 end
             end)
-
-            task.wait(2) -- Espera antes de volver a intentar
+            task.wait(5)
         end
     end)
 end)
+
+-- MISC
+miscTab:AddButton("Anti AFK", function()
+    player.Idled:Connect(function()
+        VirtualInputManager:SendKeyEvent(true, "W", false, game)
+        VirtualInputManager:SendKeyEvent(false, "W", false, game)
+    end)
+end)
+
+miscTab:AddSlider("Velocidad", function(value)
+    player.Character.Humanoid.WalkSpeed = value
+end, {
+    min = 16,
+    max = 200,
+    default = 16
+})
+
+local noclip = false
+miscTab:AddSwitch("No Clip", function(state)
+    noclip = state
+    RunService.Stepped:Connect(function()
+        if noclip then
+            for _, part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end)
+end)
+
+local flying = false
+miscTab:AddSwitch("Fly", function(state)
+    flying = state
+    if flying then
+        local bp = Instance.new("BodyPosition", player.Character.HumanoidRootPart)
+        local bg = Instance.new("BodyGyro", player.Character.HumanoidRootPart)
+        bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+        while flying and bp.Parent do
+            bp.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0, 5, 0)
+            task.wait()
+        end
+        bp:Destroy()
+        bg:Destroy()
+    end
+end)
+
+miscTab:AddButton("Chat Espía", function()
+    for _, plr in pairs(Players:GetPlayers()) do
+        plr.Chatted:Connect(function(msg)
+            print(plr.Name .. ": " .. msg)
+        end)
+    end
+end)
+
+-- KILLER
+killerTab:AddButton("Atraer Jugadores y Pisotear", function()
+    local herramienta = player.Backpack:FindFirstChild("Pisotear") or player.Character:FindFirstChild("Pisotear")
+    if herramienta then
+        herramienta.Parent = player.Character
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= player and v.Character then
+                v.Character:MoveTo(player.Character.HumanoidRootPart.Position)
+            end
+        end
+    end
+end)
+
+-- PLAYERS
+for _, plr in pairs(Players:GetPlayers()) do
+    playersTab:AddButton(plr.Name, function()
+        local stats = plr:FindFirstChild("leaderstats")
+        if stats then
+            local pwr = stats:FindFirstChild("Power") and stats.Power.Value or "N/A"
+            local rbs = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "N/A"
+            local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "N/A"
+            library:Notify("Stats de " .. plr.Name .. "\\nPoder: " .. pwr .. "\\nRenacer: " .. rbs .. "\\nKills: " .. kills)
+        end
+        workspace.CurrentCamera.CameraSubject = plr.Character:FindFirstChild("Humanoid")
+    end)
+end
+
+-- CREDITS
+creaditsTab:AddLabel("Script made by isabella (sherya)")
