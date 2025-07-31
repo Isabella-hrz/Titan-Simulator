@@ -1,8 +1,8 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
-local vim = game:GetService("VirtualInputManager")
 
 local window = library:AddWindow("Sherya Script", {
     main_color = Color3.fromRGB(200, 0, 255),
@@ -16,44 +16,79 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
--- Variables para controlar el autoclick
-local connection
+-- Variables de control
+local autoEquipEnabled = false
+local autoClickEnabled = false
+local characterConnection
+local clickConnection
 
--- Equipar la primera herramienta de la mochila
-local function equipFirstTool()
+-- Equipar herramienta "Golpe"
+local function equipGolpeTool()
     local backpack = player:WaitForChild("Backpack")
     local character = player.Character or player.CharacterAdded:Wait()
-    local tool = backpack:FindFirstChildOfClass("Tool")
+    local tool = backpack:FindFirstChild("Golpe")
     if tool then
         tool.Parent = character
     end
 end
 
--- Función para activar autoclick
-local function startAutoClick()
-    if connection then return end -- evitar duplicar conexiones
-    connection = RunService.Heartbeat:Connect(function()
-        vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-        vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-    end)
-end
-
--- Función para desactivar autoclick
-local function stopAutoClick()
-    if connection then
-        connection:Disconnect()
-        connection = nil
+-- Quitar herramienta "Golpe"
+local function unequipGolpeTool()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local tool = character:FindFirstChild("Golpe")
+    if tool then
+        tool.Parent = player.Backpack
     end
 end
 
--- Agregamos el switch en la pestaña Main
-mainTab:AddSwitch("Auto Golpe", function(enabled)
+-- Activar autoclick interno
+local function startInternalAutoClick()
+    if clickConnection then return end
+    clickConnection = RunService.Heartbeat:Connect(function()
+        if UserInputService:GetFocusedTextBox() then return end -- no hacer nada si escribe
+        local character = player.Character
+        if character then
+            local tool = character:FindFirstChild("Golpe")
+            if tool and tool:IsA("Tool") then
+                tool:Activate() -- solo animación, no click físico
+            end
+        end
+    end)
+end
+
+-- Desactivar autoclick interno
+local function stopInternalAutoClick()
+    if clickConnection then
+        clickConnection:Disconnect()
+        clickConnection = nil
+    end
+end
+
+-- Equipar tras morir
+local function onCharacterAdded()
+    if autoEquipEnabled then
+        task.wait(0.5)
+        equipGolpeTool()
+    end
+end
+
+-- Switch principal
+mainTab:AddSwitch("Auto 'Golpe' + Equipar", function(enabled)
+    autoEquipEnabled = enabled
+    autoClickEnabled = enabled
+
     if enabled then
-        equipFirstTool()
-        startAutoClick()
-        print("AutoClick activado")
+        equipGolpeTool()
+        startInternalAutoClick()
+        characterConnection = player.CharacterAdded:Connect(onCharacterAdded)
+        print("Golpe activado")
     else
-        stopAutoClick()
-        print("AutoClick desactivado")
+        unequipGolpeTool()
+        stopInternalAutoClick()
+        if characterConnection then
+            characterConnection:Disconnect()
+            characterConnection = nil
+        end
+        print("Golpe desactivado")
     end
 end)
