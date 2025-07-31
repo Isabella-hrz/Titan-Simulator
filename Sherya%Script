@@ -44,7 +44,7 @@ RunService.Heartbeat:Connect(function()
 
     pcall(function()
         local backpack = player:WaitForChild("Backpack")
-        local herramienta = character:FindFirstChild("autogolpe") or backpack:FindFirstChild("autogolpe")
+        local herramienta = character:FindFirstChild("Golpe") or backpack:FindFirstChild("Golpe")
         if herramienta and herramienta.Parent ~= character then
             if humanoid then
                 humanoid:EquipTool(herramienta)
