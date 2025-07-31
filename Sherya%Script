@@ -51,7 +51,7 @@ local function startVirtualAutoClick()
                 VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
                 VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
             end
-            task.wait(0.3) -- Cambia esto si quieres más rápido o más lento
+            task.wait(0.1) -- Cambia esto si quieres más rápido o más lento
         end
     end)
 end
@@ -63,7 +63,7 @@ end
 -- Autoequip después de morir
 local function onCharacterAdded()
     if autoEnabled then
-        task.wait(0.5)
+        task.wait(0.1)
         equipGolpeTool()
     end
 end
