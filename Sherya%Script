@@ -17,38 +17,40 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
-local autoGolpe = true  -- Puedes cambiar esto a false para desactivarlo manualmente
+local autoGolpe = false
 local player = game.Players.LocalPlayer
 
-task.spawn(function()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
+mainTab:AddSwitch("Auto Golpe", function(state)
+    autoGolpe = state
 
-    -- Detectar cuando el personaje muere y reaparece
-    humanoid.Died:Connect(function()
-        -- Esperar a que el nuevo personaje aparezca
-        character = player.CharacterAdded:Wait()
-        humanoid = character:WaitForChild("Humanoid")
-    end)
+    if autoGolpe then
+        task.spawn(function()
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:WaitForChild("Humanoid")
 
-    while autoGolpe do
-        pcall(function()
-            local backpack = player:WaitForChild("Backpack")
-            
-            -- Buscar herramienta equipada o en mochila
-            local herramienta = character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
+            humanoid.Died:Connect(function()
+                -- Cuando mueres, espera el nuevo personaje
+                character = player.CharacterAdded:Wait()
+                humanoid = character:WaitForChild("Humanoid")
+            end)
 
-            -- Equipar si está en mochila y no está equipada
-            if herramienta and herramienta.Parent ~= character then
-                herramienta.Parent = character
-            end
+            while autoGolpe do
+                pcall(function()
+                    local backpack = player:WaitForChild("Backpack")
 
-            -- Activar herramienta equipada
-            if herramienta and herramienta.Parent == character then
-                herramienta:Activate()
+                    local herramienta = character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
+
+                    if herramienta and herramienta.Parent ~= character then
+                        herramienta.Parent = character
+                    end
+
+                    if herramienta and herramienta.Parent == character then
+                        herramienta:Activate()
+                    end
+                end)
+                task.wait(0.1)
             end
         end)
-        task.wait(0.1)
     end
 end)
 
