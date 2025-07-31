@@ -1,12 +1,9 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-
 local player = Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-player.CharacterAdded:Connect(function(c) char = c end)
 
 local window = library:AddWindow("Sherya Script", {
     main_color = Color3.fromRGB(200, 0, 255),
@@ -15,6 +12,10 @@ local window = library:AddWindow("Sherya Script", {
 })
 
 local mainTab = window:AddTab("Main")
+local miscTab = window:AddTab("Misc")
+local killerTab = window:AddTab("Killer")
+local playersTab = window:AddTab("Players")
+local creaditsTab = window:AddTab("Credits")
 
 local autoPunch = false
 
@@ -131,4 +132,189 @@ mainTab:AddSwitch("Auto Rebirth", function(state)
             task.wait(5) -- esperar 5 segundos antes de intentar de nuevo
         end
     end)
+end)
+-- Cuando mueres/reapareces, reiniciar el bucle si está activado
+player.CharacterAdded:Connect(function()
+    if autoGolpe then
+        iniciarAutoGolpe()
+    end
+end)
+
+local autoOrb = false
+
+mainTab:AddSwitch("Auto Orb", function(state)
+    autoOrb = state
+
+    -- Crear GUI solo una vez
+    if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("hehe") then
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "hehe"
+        ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+        local lol = Instance.new("TextLabel")
+        lol.Name = "lol"
+        lol.Size = UDim2.new(0, 200, 0, 50)
+        lol.Position = UDim2.new(0.5, -100, 0, 10)
+        lol.BackgroundTransparency = 1
+        lol.TextColor3 = Color3.new(1, 1, 1)
+        lol.Parent = ScreenGui
+    end
+
+    task.spawn(function()
+        while autoOrb do
+            pcall(function()
+                for _, v in pairs(game.Workspace:GetChildren()) do
+                    if v.Name == "Drop" and v:IsA("BasePart") then
+                        v.CFrame = player.Character.HumanoidRootPart.CFrame
+                    end
+                end
+            end)
+            task.wait(1)
+        end
+    end)
+end)
+
+local autoRenacer = false
+
+mainTab:AddSwitch("Auto Renacimiento", function(state)
+    autoRenacer = state
+
+    task.spawn(function()
+        while autoRenacer do
+            pcall(function()
+                -- 1. Clic al botón "RENACER"
+                for _, obj in ipairs(game:GetDescendants()) do
+                    if obj:IsA("TextButton") and string.lower(obj.Text) == "renacer" then
+                        obj:Activate()
+                        break
+                    end
+                end
+
+                task.wait(0.3)
+
+                -- 2. Escribir "Si" en el cuadro de texto
+                local escrito = false
+                for _, obj in ipairs(game:GetDescendants()) do
+                    if obj:IsA("TextBox") and string.lower(obj.PlaceholderText or ""):find("type here") then
+                        obj.Text = "Si"
+                        escrito = true
+                        break
+                    end
+                end
+
+                -- 3. Si "Si" no funciona, intenta "Yes"
+                if not escrito then
+                    for _, obj in ipairs(game:GetDescendants()) do
+                        if obj:IsA("TextBox") and string.lower(obj.PlaceholderText or ""):find("type here") then
+                            obj.Text = "Yes"
+                            break
+                        end
+                    end
+                end
+
+                task.wait(0.2)
+
+                -- 4. Presionar botón "CONFIRMAR"
+                for _, obj in ipairs(game:GetDescendants()) do
+                    if obj:IsA("TextButton") and string.lower(obj.Text) == "confirmar" then
+                        obj:Activate()
+                        break
+                    end
+                end
+            end)
+
+            task.wait(2) -- Espera antes de volver a intentar
+        end
+    end)
+end)
+
+miscTab:AddTextBox("Auto Speed", function(text)
+    speedValue = tonumber(text) or 16
+
+    if player and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = speedValue
+    end
+end)
+
+local autoSpeedSwitch = miscTab:AddSwitch("Auto Set Speed", function(bool)
+    autoSpeedEnabled = bool
+
+    if autoSpeedEnabled then
+        if player and player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = speedValue
+        end
+
+        if autoSpeedConnection then
+            autoSpeedConnection:Disconnect()
+        end
+
+        autoSpeedConnection = player.CharacterAdded:Connect(function(character)
+            local humanoid = character:WaitForChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = speedValue
+            end
+        end)
+    else
+        if autoSpeedConnection then
+            autoSpeedConnection:Disconnect()
+            autoSpeedConnection = nil
+        end
+    end
+end)
+
+local infiniteJumpSwitch = miscTab:AddSwitch("Infinite Jump", function(bool)
+    if bool then
+        local infiniteJumpConnection
+        infiniteJumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+
+        infiniteJumpSwitch._connection = infiniteJumpConnection
+    else
+        if infiniteJumpSwitch._connection then
+            infiniteJumpSwitch._connection:Disconnect()
+            infiniteJumpSwitch._connection = nil
+        end
+    end
+end)
+
+local noClipSwitch = miscTab:AddSwitch("No Clip", function(bool)
+    if bool then
+        local noclipLoop = game:GetService("RunService").Stepped:Connect(function()
+            for _, child in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if child:IsA("BasePart") and child.CanCollide == true then
+                    child.CanCollide = false
+                end
+            end
+        end)
+
+        noClipSwitch._noclipLoop = noclipLoop
+    else
+        if noClipSwitch._noclipLoop then
+            noClipSwitch._noclipLoop:Disconnect()
+            noClipSwitch._noclipLoop = nil
+        end
+
+        for _, child in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            if child:IsA("BasePart") then
+                child.CanCollide = true
+            end
+        end
+    end
+end)
+
+miscTab:AddButton("Chat Espía", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/Vv9Yw3Uw"))()
+end)
+
+miscTab:AddButton("Anti AFK", function()
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end)
+    print("Anti-AFK activado correctamente.")
 end)
