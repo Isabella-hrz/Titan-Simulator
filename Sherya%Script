@@ -22,15 +22,24 @@ mainTab:AddSwitch("Auto Golpe Seguro", function(state)
     task.spawn(function()
         while autoGolpe do
             pcall(function()
-                local herramientaCorrecta = "Golpe" -- CAMBIA A "Pisotear" si quieres usar esa
-
-                -- Forzar herramienta correcta cada ciclo
+                local herramientaNombre = "Golpe" -- Cambia a "Pisotear" si deseas
                 local mochila = player:WaitForChild("Backpack")
-                local herramienta = player.Character:FindFirstChild(herramientaCorrecta) or mochila:FindFirstChild(herramientaCorrecta)
+                local character = player.Character or player.CharacterAdded:Wait()
 
-                if herramienta then
-                    herramienta.Parent = player.Character
-                    herramienta:Activate()
+                -- Buscar la herramienta en el personaje o en la mochila
+                local herramienta = character:FindFirstChild(herramientaNombre) or mochila:FindFirstChild(herramientaNombre)
+
+                if herramienta and herramienta:IsA("Tool") then
+                    -- Si está en la mochila, equiparla
+                    if herramienta.Parent == mochila then
+                        herramienta.Parent = character
+                        task.wait(0.2) -- espera un poco antes de activar
+                    end
+
+                    -- Activar herramienta
+                    if herramienta.Parent == character then
+                        herramienta:Activate()
+                    end
                 end
             end)
             task.wait(0.15)
@@ -52,7 +61,6 @@ mainTab:AddSwitch("Auto Orb", function(state)
 
         local label = Instance.new("TextLabel")
         label.Name = "lol"
-        label.Text = "Maked By Supernoob exploiter"
         label.Size = UDim2.new(0, 200, 0, 50)
         label.Position = UDim2.new(0, 10, 0, 10)
         label.TextColor3 = Color3.new(1, 0, 1)
