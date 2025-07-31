@@ -12,42 +12,19 @@ local window = library:AddWindow("Sherya Script", {
 local mainTab = window:AddTab("Main")
 mainTab:Show()
 
--- Auto Golpe toggle --
+-- Variables y conexiones
 local autoClick = false
 local clickConnection
 
-mainTab:AddToggle("Auto Golpe", function(state)
-    autoClick = state
-
-    if autoClick then
-        local backpack = player:WaitForChild("Backpack")
-        local character = player.Character or player.CharacterAdded:Wait()
-        local tool = backpack:FindFirstChildOfClass("Tool")
-        if tool then
-            tool.Parent = character
-        end
-
-        clickConnection = RunService.Heartbeat:Connect(function()
-            local vim = game:GetService("VirtualInputManager")
-            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-        end)
-    else
-        if clickConnection then
-            clickConnection:Disconnect()
-            clickConnection = nil
-        end
-    end
-end)
-
--- Auto Atracción Orbes toggle --
 local autoAttract = false
 local attractConnection
 
+-- Función para obtener carpeta de orbes
 local function getOrbFolder()
     return workspace:FindFirstChild("Orbs") or workspace:FindFirstChild("Collectibles")
 end
 
+-- Función para activar/desactivar atracción de orbes
 local function toggleAttract(state)
     autoAttract = state
 
@@ -77,6 +54,32 @@ local function toggleAttract(state)
     end
 end
 
+-- Toggle para Auto Golpe
+mainTab:AddToggle("Auto Golpe", function(state)
+    autoClick = state
+
+    if autoClick then
+        local backpack = player:WaitForChild("Backpack")
+        local character = player.Character or player.CharacterAdded:Wait()
+        local tool = backpack:FindFirstChildOfClass("Tool")
+        if tool then
+            tool.Parent = character
+        end
+
+        clickConnection = RunService.Heartbeat:Connect(function()
+            local vim = game:GetService("VirtualInputManager")
+            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        end)
+    else
+        if clickConnection then
+            clickConnection:Disconnect()
+            clickConnection = nil
+        end
+    end
+end)
+
+-- Toggle para Auto Orbes
 mainTab:AddToggle("Auto Orbes", function(state)
     toggleAttract(state)
 end)
