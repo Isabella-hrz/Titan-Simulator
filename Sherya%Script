@@ -18,42 +18,56 @@ local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
 local player = game.Players.LocalPlayer
-local autoGolpe = false
+local RunService = game:GetService("RunService")
+
+local autoPunch = false
+local equipCooldown = 0.3
 
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
-local RunService = game:GetService("RunService")
-local lastEquipTick = 0
+local lastEquipTime = 0
 
-local function onCharacterAdded(newChar)
+-- Actualiza referencias cuando reapareces
+player.CharacterAdded:Connect(function(newChar)
     character = newChar
     humanoid = character:WaitForChild("Humanoid")
-end
-player.CharacterAdded:Connect(onCharacterAdded)
-
-mainTab:AddSwitch("Auto Golpe", function(state)
-    autoGolpe = state
 end)
 
+-- Función para equipar la herramienta "Golpe"
+local function equipTool()
+    local backpack = player:WaitForChild("Backpack")
+    local tool = character:FindFirstChild("Golpe") or backpack:FindFirstChild("Golpe")
+    if tool and tool.Parent ~= character then
+        humanoid:EquipTool(tool)
+        return true
+    end
+    return false
+end
+
+-- Loop que ejecuta el auto punch
 RunService.Heartbeat:Connect(function()
-    if not autoGolpe then return end
+    if not autoPunch then return end
 
-    if tick() - lastEquipTick < 0.3 then return end
-    lastEquipTick = tick()
-
-    pcall(function()
-        local backpack = player:WaitForChild("Backpack")
-        local herramienta = character:FindFirstChild("Golpe") or backpack:FindFirstChild("Golpe")
-        if herramienta and herramienta.Parent ~= character then
-            if humanoid then
-                humanoid:EquipTool(herramienta)
+    if tick() - lastEquipTime >= equipCooldown then
+        lastEquipTime = tick()
+        pcall(function()
+            -- Equipar herramienta si no está equipada
+            if equipTool() then
+                task.wait(0.1)
             end
-        end
-        if herramienta and herramienta.Parent == character then
-            herramienta:Activate()
-        end
-    end)
+            -- Activar herramienta si está equipada
+            local tool = character:FindFirstChild("Golpe")
+            if tool and tool.Parent == character then
+                tool:Activate()
+            end
+        end)
+    end
+end)
+
+-- Interruptor para Elerium v2 UI (agrega en mainTab)
+mainTab:AddSwitch("Auto Punch", function(state)
+    autoPunch = state
 end)
 
 local autoOrb = false
