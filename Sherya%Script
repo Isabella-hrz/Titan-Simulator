@@ -16,20 +16,24 @@ local window = library:AddWindow("Sherya Script", {
 
 local mainTab = window:AddTab("Main")
 
--- AUTO GOLPE
 local autoGolpe = false
-mainTab:AddSwitch("Auto Golpe", function(state)
+mainTab:AddSwitch("Auto Golpe Seguro", function(state)
     autoGolpe = state
     task.spawn(function()
         while autoGolpe do
             pcall(function()
-                local herramienta = char:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+                local herramientaCorrecta = "Golpe" -- CAMBIA A "Pisotear" si quieres usar esa
+
+                -- Forzar herramienta correcta cada ciclo
+                local mochila = player:WaitForChild("Backpack")
+                local herramienta = player.Character:FindFirstChild(herramientaCorrecta) or mochila:FindFirstChild(herramientaCorrecta)
+
                 if herramienta then
-                    herramienta.Parent = char
+                    herramienta.Parent = player.Character
                     herramienta:Activate()
                 end
             end)
-            task.wait(0.1)
+            task.wait(0.15)
         end
     end)
 end)
