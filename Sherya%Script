@@ -17,32 +17,43 @@ local window = library:AddWindow("Sherya Script", {
 local mainTab = window:AddTab("Main")
 
 local autoGolpe = false
-mainTab:AddSwitch("Auto Golpe Seguro", function(state)
+
+mainTab:AddSwitch("Auto Golpe", function(state)
     autoGolpe = state
+
+    local function equiparGolpe()
+        local mochila = player:WaitForChild("Backpack")
+        local herramienta = mochila:FindFirstChild("Golpe")
+
+        if herramienta then
+            herramienta.Parent = player.Character
+            task.wait(0.2) -- Esperar a que se equipe
+        end
+    end
+
+    -- Detectar cuando el personaje respawnea (muere o evoluciona)
+    player.CharacterAdded:Connect(function()
+        if autoGolpe then
+            task.wait(1) -- Esperar a que cargue el personaje y mochila
+            equiparGolpe()
+        end
+    end)
+
     task.spawn(function()
         while autoGolpe do
             pcall(function()
-                local herramientaNombre = "Golpe" -- Cambia a "Pisotear" si deseas
-                local mochila = player:WaitForChild("Backpack")
                 local character = player.Character or player.CharacterAdded:Wait()
+                local herramienta = character:FindFirstChild("Golpe") or player.Backpack:FindFirstChild("Golpe")
 
-                -- Buscar la herramienta en el personaje o en la mochila
-                local herramienta = character:FindFirstChild(herramientaNombre) or mochila:FindFirstChild(herramientaNombre)
-
-                if herramienta and herramienta:IsA("Tool") then
-                    -- Si está en la mochila, equiparla
-                    if herramienta.Parent == mochila then
+                if herramienta then
+                    if herramienta.Parent == player.Backpack then
                         herramienta.Parent = character
-                        task.wait(0.2) -- espera un poco antes de activar
+                        task.wait(0.2)
                     end
-
-                    -- Activar herramienta
-                    if herramienta.Parent == character then
-                        herramienta:Activate()
-                    end
+                    herramienta:Activate()
                 end
             end)
-            task.wait(0.15)
+            task.wait(0.1)
         end
     end)
 end)
@@ -56,16 +67,8 @@ mainTab:AddSwitch("Auto Orb", function(state)
     -- Solo crea el mensaje visual una vez
     if not orbGuiCreado then
         local screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "hehe"
+        screenGui.Name = "Sherya"
         screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-
-        local label = Instance.new("TextLabel")
-        label.Name = "lol"
-        label.Size = UDim2.new(0, 200, 0, 50)
-        label.Position = UDim2.new(0, 10, 0, 10)
-        label.TextColor3 = Color3.new(1, 0, 1)
-        label.BackgroundTransparency = 1
-        label.Parent = screenGui
 
         orbGuiCreado = true
     end
