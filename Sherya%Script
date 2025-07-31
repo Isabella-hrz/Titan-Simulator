@@ -290,73 +290,76 @@ end)
 
 local selectedPlayer = nil
 
--- Crear el dropdown vacío
-playersTab:AddDropdown("Seleccionar Jugador", {}, function(value)
+local selectedPlayer = nil
+
+-- Función para obtener los jugadores del servidor
+local function obtenerJugadores()
+    local jugadores = {}
+    for _, p in ipairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer then
+            table.insert(jugadores, p.Name)
+        end
+    end
+    return jugadores
+end
+
+-- Crear el dropdown con jugadores
+playersTab:AddDropdown("Seleccionar Jugador", obtenerJugadores(), function(value)
     selectedPlayer = value
 end)
 
--- Función para actualizar el listado de jugadores
-local function actualizarDropdown()
-    local jugadores = {}
-    for _, jugador in pairs(game.Players:GetPlayers()) do
-        if jugador ~= game.Players.LocalPlayer then
-            table.insert(jugadores, jugador.Name)
-        end
-    end
-    playersTab:UpdateDropdown("Seleccionar Jugador", jugadores)
-end
-
--- Llenar el dropdown al iniciar
-actualizarDropdown()
-
--- Botón para refrescar manualmente
-playersTab:AddButton("🔄 Refrescar Jugadores", actualizarDropdown)
+-- Botón para refrescar el dropdown manualmente
+playersTab:AddButton("Refrescar Jugadores", function()
+    playersTab:UpdateDropdown("Seleccionar Jugador", obtenerJugadores())
+    library:Notify("Lista de jugadores actualizada.")
+end)
 
 -- Ver estadísticas del jugador seleccionado
-playersTab:AddButton("📊 Ver Stats del Jugador", function()
+playersTab:AddButton("Ver Stats del Jugador", function()
     local p = game.Players:FindFirstChild(selectedPlayer)
     if p and p:FindFirstChild("leaderstats") then
         local stats = p.leaderstats
         local poder = stats:FindFirstChild("Power") and stats.Power.Value or "?"
         local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "?"
-        local renacer = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
+        local rebirths = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
 
-        library:Notify("📊 Stats de "..p.Name..
-            "\n💪 Poder: "..poder..
-            "\n☠️ Kills: "..kills..
-            "\n🔁 Rebirths: "..renacer)
+        library:Notify("Stats de "..p.Name..
+            "\n Poder: "..poder..
+            "\n Kills: "..kills..
+            "\n Rebirths: "..rebirths)
     else
-        library:Notify("❌ No se encontraron stats del jugador seleccionado.")
+        library:Notify("No se encontraron stats del jugador seleccionado.")
     end
 end)
 
--- Espectear al jugador seleccionado
-playersTab:AddButton("🎥 Espectear", function()
-    local target = game.Players:FindFirstChild(selectedPlayer)
-    if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-        workspace.CurrentCamera.CameraSubject = target.Character:FindFirstChild("Humanoid")
-        library:Notify("🎥 Ahora estás especteando a "..target.Name)
+-- Espectear al jugador
+playersTab:AddButton("Espectear", function()
+    local p = game.Players:FindFirstChild(selectedPlayer)
+    if p and p.Character and p.Character:FindFirstChild("Humanoid") then
+        workspace.CurrentCamera.CameraSubject = p.Character:FindFirstChild("Humanoid")
+        library:Notify("Especteando a "..p.Name)
+    else
+        library:Notify("No se puede espectear al jugador.")
     end
 end)
 
--- Dejar de espectear y volver a ti
-playersTab:AddButton("🚶 Dejar de Espectear", function()
+-- Dejar de espectear
+playersTab:AddButton("Dejar de Espectear", function()
     local lp = game.Players.LocalPlayer
     if lp.Character and lp.Character:FindFirstChild("Humanoid") then
         workspace.CurrentCamera.CameraSubject = lp.Character:FindFirstChild("Humanoid")
-        library:Notify("🔄 Volviste a ti mismo.")
+        library:Notify("Volviste a ti mismo.")
     end
 end)
 
--- Teletransportarse al jugador seleccionado
-playersTab:AddButton("🧭 Teletransportarse", function()
+-- Teletransportarse al jugador
+playersTab:AddButton("Teletransportarse", function()
     local p = game.Players:FindFirstChild(selectedPlayer)
     if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
         game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame =
             p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
-        library:Notify("🚀 Te has teletransportado a "..p.Name)
+        library:Notify("Te teletransportaste a "..p.Name)
     else
-        library:Notify("❌ No se pudo teletransportar.")
+        library:Notify("No se pudo teletransportar.")
     end
 end)
-
