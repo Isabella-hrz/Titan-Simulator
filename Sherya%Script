@@ -12,22 +12,18 @@ local window = library:AddWindow("Sherya Script", {
 local mainTab = window:AddTab("Main")
 mainTab:Show()
 
--- Variables y conexiones
 local autoClick = false
 local clickConnection
 
 local autoAttract = false
 local attractConnection
 
--- Función para obtener carpeta de orbes
 local function getOrbFolder()
     return workspace:FindFirstChild("Orbs") or workspace:FindFirstChild("Collectibles")
 end
 
--- Función para activar/desactivar atracción de orbes
 local function toggleAttract(state)
     autoAttract = state
-
     if autoAttract then
         attractConnection = RunService.Heartbeat:Connect(function()
             local character = player.Character
@@ -54,8 +50,7 @@ local function toggleAttract(state)
     end
 end
 
--- Toggle para Auto Golpe
-mainTab:AddToggle("Auto Golpe", function(state)
+mainTab:AddSwitch("Auto Golpe", function(state)
     autoClick = state
 
     if autoClick then
@@ -79,7 +74,6 @@ mainTab:AddToggle("Auto Golpe", function(state)
     end
 end)
 
--- Toggle para Auto Orbes
-mainTab:AddToggle("Auto Orbes", function(state)
+mainTab:AddSwitch("Auto Orbes", function(state)
     toggleAttract(state)
 end)
