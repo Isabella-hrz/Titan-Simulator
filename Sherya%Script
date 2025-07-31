@@ -17,11 +17,16 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
--- Variables
+-- Variables Auto Golpe
 local autoEnabled = false
 local characterConnection
 local autoClickLoop = false
-local clickDelay = 0.1 -- velocidad inicial (en segundos)
+local clickDelay = 0.1 -- velocidad fija en segundos
+local pauseAutoClick = false
+
+-- Variables Auto Orb
+local autoCollectEnabled = false
+local autoCollectLoop
 
 -- Equipar herramienta "Golpe"
 local function equipGolpeTool()
@@ -42,14 +47,15 @@ local function unequipGolpeTool()
     end
 end
 
--- Autoclick virtual sin pausa en chat
+-- Autoclick virtual con pausa en chat
 local function startVirtualAutoClick()
     autoClickLoop = true
     task.spawn(function()
         while autoClickLoop do
-            -- Ya no se verifica si está escribiendo
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            if not pauseAutoClick then
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+            end
             task.wait(clickDelay)
         end
     end)
@@ -67,8 +73,49 @@ local function onCharacterAdded()
     end
 end
 
+-- Detectar si se presiona T o Enter para pausar autoclick y poder abrir chat
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.T or input.KeyCode == Enum.KeyCode.Return then
+        pauseAutoClick = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.T or input.KeyCode == Enum.KeyCode.Return then
+        pauseAutoClick = false
+    end
+end)
+
+-- Auto colección de orbes ("Drop")
+local function startAutoCollect()
+    autoCollectEnabled = true
+    autoCollectLoop = task.spawn(function()
+        while autoCollectEnabled do
+            for i, v in pairs(game.Workspace:GetChildren()) do
+                if v.Name == "Drop" and v:IsA("BasePart") then
+                    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        v.CFrame = hrp.CFrame
+                    end
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+local function stopAutoCollect()
+    autoCollectEnabled = false
+    if autoCollectLoop then
+        autoCollectLoop:Cancel()
+        autoCollectLoop = nil
+    end
+end
+
 -- Switch para activar/desactivar autoclick + equipar
-mainTab:AddSwitch("Auto Golpe Seguro", function(enabled)
+mainTab:AddSwitch("Auto Golpe", function(enabled)
     autoEnabled = enabled
 
     if enabled then
@@ -87,12 +134,13 @@ mainTab:AddSwitch("Auto Golpe Seguro", function(enabled)
     end
 end)
 
--- Slider para ajustar velocidad entre golpes
-mainTab:AddSlider("Velocidad de Golpe (Delay)", function(value)
-    clickDelay = value
-end, {
-    min = 0.05,
-    max = 1,
-    default = 0.1,
-    suffix = "s"
-})
+-- Switch para activar/desactivar auto colección de orbes
+mainTab:AddSwitch("Auto Orbes", function(enabled)
+    if enabled then
+        startAutoCollect()
+        print("Auto colección de orbes activada")
+    else
+        stopAutoCollect()
+        print("Auto colección de orbes desactivada")
+    end
+end)
