@@ -289,25 +289,35 @@ killerTab:AddSwitch("Auto Pisotear", function(state)
 end)
 
 local selectedPlayer = nil
+local playersList = {}
 
+local function actualizarLista()
+    playersList = {}
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer then
+            table.insert(playersList, p.Name)
+        end
+    end
+    playersTab:UpdateDropdown("Seleccionar Jugador", playersList)
+end
+
+-- Crear dropdown con lista vacía inicialmente
 playersTab:AddDropdown("Seleccionar Jugador", {}, function(value)
     selectedPlayer = value
 end)
 
--- Cargar automáticamente los jugadores
-task.spawn(function()
-    while task.wait(2) do
-        local names = {}
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p.Name ~= game.Players.LocalPlayer.Name then
-                table.insert(names, p.Name)
-            end
-        end
-        playersTab:UpdateDropdown("Seleccionar Jugador", names)
-    end
+-- Botón para refrescar la lista de jugadores
+playersTab:AddButton("Refrescar Lista", function()
+    actualizarLista()
+    library:Notify("Lista de jugadores actualizada")
 end)
 
+-- Botón para ver stats
 playersTab:AddButton("Ver Stats del Jugador", function()
+    if not selectedPlayer then
+        library:Notify("Selecciona un jugador primero")
+        return
+    end
     local p = game.Players:FindFirstChild(selectedPlayer)
     if p and p:FindFirstChild("leaderstats") then
         local stats = p.leaderstats
@@ -315,21 +325,44 @@ playersTab:AddButton("Ver Stats del Jugador", function()
         local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "?"
         local renacer = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
 
-        library:Notify(" Stats de "..p.Name.."\n Poder: "..poder.."\n Kills: "..kills.."\n Rebirths: "..renacer)
+        library:Notify("Stats de "..p.Name.."\nPoder: "..poder.."\nKills: "..kills.."\nRebirths: "..renacer)
+    else
+        library:Notify("No se encontraron stats para "..selectedPlayer)
     end
 end)
 
+-- Botón para espectear
 playersTab:AddButton("Espectear", function()
+    if not selectedPlayer then
+        library:Notify("Selecciona un jugador primero")
+        return
+    end
     local target = game.Players:FindFirstChild(selectedPlayer)
     if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-        workspace.CurrentCamera.CameraSubject = target.Character:FindFirstChild("Humanoid")
+        workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
+        library:Notify("Espectando a " .. selectedPlayer)
+    else
+        library:Notify("Jugador no disponible para espectear")
     end
 end)
 
+-- Botón para teletransportarse
 playersTab:AddButton("Teletransportarse", function()
+    if not selectedPlayer then
+        library:Notify("Selecciona un jugador primero")
+        return
+    end
     local p = game.Players:FindFirstChild(selectedPlayer)
     if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-        game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame =
-            p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+        local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+            library:Notify("Teletransportado a " .. selectedPlayer)
+        end
+    else
+        library:Notify("Jugador no disponible para teletransportarse")
     end
 end)
+
+-- Actualizar la lista al iniciar
+actualizarLista()
