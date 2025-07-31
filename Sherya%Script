@@ -17,33 +17,39 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
-local autoGolpe = false
+local autoGolpe = true  -- Puedes cambiar esto a false para desactivarlo manualmente
+local player = game.Players.LocalPlayer
 
-mainTab:AddSwitch("Auto Golpe", function(state)
-    autoGolpe = state
+task.spawn(function()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
 
-    task.spawn(function()
-        while autoGolpe do
-            pcall(function()
-                local character = player.Character or player.CharacterAdded:Wait()
-                local backpack = player:WaitForChild("Backpack")
-
-                -- Buscar herramienta
-                local herramienta = character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
-
-                -- Equipar si está en la mochila
-                if herramienta and herramienta.Parent ~= character then
-                    herramienta.Parent = character
-                end
-
-                -- Activar herramienta si está equipada
-                if herramienta and herramienta.Parent == character then
-                    herramienta:Activate()
-                end
-            end)
-            task.wait(0.1) -- Puedes ajustar la velocidad del click aquí
-        end
+    -- Detectar cuando el personaje muere y reaparece
+    humanoid.Died:Connect(function()
+        -- Esperar a que el nuevo personaje aparezca
+        character = player.CharacterAdded:Wait()
+        humanoid = character:WaitForChild("Humanoid")
     end)
+
+    while autoGolpe do
+        pcall(function()
+            local backpack = player:WaitForChild("Backpack")
+            
+            -- Buscar herramienta equipada o en mochila
+            local herramienta = character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
+
+            -- Equipar si está en mochila y no está equipada
+            if herramienta and herramienta.Parent ~= character then
+                herramienta.Parent = character
+            end
+
+            -- Activar herramienta equipada
+            if herramienta and herramienta.Parent == character then
+                herramienta:Activate()
+            end
+        end)
+        task.wait(0.1)
+    end
 end)
 
 local autoOrb = false
@@ -81,36 +87,56 @@ mainTab:AddSwitch("Auto Orb", function(state)
     end)
 end)
 
-local autoRebirth = false
+local autoRenacer = false
 
 mainTab:AddSwitch("Auto Renacimiento", function(state)
-    autoRebirth = state
+    autoRenacer = state
 
     task.spawn(function()
-        while autoRebirth do
+        while autoRenacer do
             pcall(function()
-                -- Buscar botón RENACER
-                for _, v in pairs(game:GetDescendants()) do
-                    if v:IsA("TextButton") and v.Text:lower():find("renacer") then
-                        v:FireClickDetector() -- Intentar usar FireClickDetector si aplica
-                        v:Activate()          -- En caso sea botón UI
-                        wait(0.5)
+                -- 1. Clic al botón "RENACER"
+                for _, obj in ipairs(game:GetDescendants()) do
+                    if obj:IsA("TextButton") and string.lower(obj.Text) == "renacer" then
+                        obj:Activate()
+                        break
                     end
                 end
 
-                -- Buscar cuadro de confirmación
-                for _, v in pairs(game:GetDescendants()) do
-                    if v:IsA("TextBox") and v.PlaceholderText and v.PlaceholderText:lower():find("type here") then
-                        v.Text = "yes"
-                        wait(0.2)
-                    end
+                task.wait(0.3)
 
-                    if v:IsA("TextButton") and v.Text:lower():find("confirmar") then
-                        v:Activate()
+                -- 2. Escribir "Si" en el cuadro de texto
+                local escrito = false
+                for _, obj in ipairs(game:GetDescendants()) do
+                    if obj:IsA("TextBox") and string.lower(obj.PlaceholderText or ""):find("type here") then
+                        obj.Text = "Si"
+                        escrito = true
+                        break
+                    end
+                end
+
+                -- 3. Si "Si" no funciona, intenta "Yes"
+                if not escrito then
+                    for _, obj in ipairs(game:GetDescendants()) do
+                        if obj:IsA("TextBox") and string.lower(obj.PlaceholderText or ""):find("type here") then
+                            obj.Text = "Yes"
+                            break
+                        end
+                    end
+                end
+
+                task.wait(0.2)
+
+                -- 4. Presionar botón "CONFIRMAR"
+                for _, obj in ipairs(game:GetDescendants()) do
+                    if obj:IsA("TextButton") and string.lower(obj.Text) == "confirmar" then
+                        obj:Activate()
+                        break
                     end
                 end
             end)
-            task.wait(5) -- Espera 5 segundos entre intentos de renacer (ajustable)
+
+            task.wait(2) -- Espera antes de volver a intentar
         end
     end)
 end)
