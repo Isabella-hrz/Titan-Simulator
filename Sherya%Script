@@ -287,3 +287,49 @@ killerTab:AddSwitch("Auto Pisotear", function(state)
         end
     end)
 end)
+
+local selectedPlayer = nil
+
+playersTab:AddDropdown("Seleccionar Jugador", {}, function(value)
+    selectedPlayer = value
+end)
+
+-- Cargar automáticamente los jugadores
+task.spawn(function()
+    while task.wait(2) do
+        local names = {}
+        for _, p in pairs(game.Players:GetPlayers()) do
+            if p.Name ~= game.Players.LocalPlayer.Name then
+                table.insert(names, p.Name)
+            end
+        end
+        playersTab:UpdateDropdown("Seleccionar Jugador", names)
+    end
+end)
+
+playersTab:AddButton("Ver Stats del Jugador", function()
+    local p = game.Players:FindFirstChild(selectedPlayer)
+    if p and p:FindFirstChild("leaderstats") then
+        local stats = p.leaderstats
+        local poder = stats:FindFirstChild("Power") and stats.Power.Value or "?"
+        local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "?"
+        local renacer = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
+
+        library:Notify(" Stats de "..p.Name.."\n Poder: "..poder.."\n Kills: "..kills.."\n Rebirths: "..renacer)
+    end
+end)
+
+playersTab:AddButton("Espectear", function()
+    local target = game.Players:FindFirstChild(selectedPlayer)
+    if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+        workspace.CurrentCamera.CameraSubject = target.Character:FindFirstChild("Humanoid")
+    end
+end)
+
+playersTab:AddButton("Teletransportarse", function()
+    local p = game.Players:FindFirstChild(selectedPlayer)
+    if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame =
+            p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+    end
+end)
