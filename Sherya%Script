@@ -17,164 +17,100 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
--- Variables toggles
 local autoGolpe = false
-local autoClickLoop = false
-local pauseAutoClick = false
 
-local autoCollectEnabled = false
-local autoCollectLoop
-
-local autoRebirth = false
-
--- Funciones Auto Golpe Seguro
-local function equipFirstTool()
-    local backpack = player:WaitForChild("Backpack")
-    local character = player.Character or player.CharacterAdded:Wait()
-    local firstTool = backpack:FindFirstChildOfClass("Tool")
-    if firstTool then
-        firstTool.Parent = character
-        print("Equipando herramienta: "..firstTool.Name)
-        return true
-    end
-    return false
-end
-
-local function unequipFirstTool()
-    local character = player.Character or player.CharacterAdded:Wait()
-    local tool = character:FindFirstChildOfClass("Tool")
-    if tool then
-        tool.Parent = player.Backpack
-    end
-end
-
-local function startVirtualAutoClick()
-    autoClickLoop = true
-    task.spawn(function()
-        while autoClickLoop do
-            if not pauseAutoClick then
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-            end
-            task.wait(0.1)
-        end
-    end)
-end
-
-local function stopVirtualAutoClick()
-    autoClickLoop = false
-end
-
--- Pausar autoclick para chat
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.T or input.KeyCode == Enum.KeyCode.Return then
-        pauseAutoClick = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.T or input.KeyCode == Enum.KeyCode.Return then
-        pauseAutoClick = false
-    end
-end)
-
--- Toggle Auto Golpe Seguro
 mainTab:AddSwitch("Auto Golpe", function(state)
     autoGolpe = state
 
-    if state then
-        equipFirstTool()
-        startVirtualAutoClick()
-
-        task.spawn(function()
-            while autoGolpe do
+    task.spawn(function()
+        while autoGolpe do
+            pcall(function()
                 local character = player.Character or player.CharacterAdded:Wait()
                 local backpack = player:WaitForChild("Backpack")
 
-                local toolEquipped = character:FindFirstChildOfClass("Tool")
-                local firstTool = backpack:FindFirstChildOfClass("Tool")
+                -- Buscar herramienta
+                local herramienta = character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
 
-                if not toolEquipped or (firstTool and toolEquipped ~= firstTool) then
-                    if firstTool then
-                        firstTool.Parent = character
-                        print("Equipando primera herramienta después de evolución")
-                    end
+                -- Equipar si está en la mochila
+                if herramienta and herramienta.Parent ~= character then
+                    herramienta.Parent = character
                 end
-                task.wait(0.1)
-            end
-        end)
 
-    else
-        stopVirtualAutoClick()
-        unequipFirstTool()
-        print("Auto Golpe Seguro desactivado")
-    end
+                -- Activar herramienta si está equipada
+                if herramienta and herramienta.Parent == character then
+                    herramienta:Activate()
+                end
+            end)
+            task.wait(0.1) -- Puedes ajustar la velocidad del click aquí
+        end
+    end)
 end)
 
--- Auto colección orbes
-local function startAutoCollect()
-    autoCollectEnabled = true
-    autoCollectLoop = task.spawn(function()
-        while autoCollectEnabled do
-            for _, v in pairs(game.Workspace:GetChildren()) do
-                if v.Name == "Drop" and v:IsA("BasePart") then
-                    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        v.CFrame = hrp.CFrame
+local autoOrb = false
+
+mainTab:AddSwitch("Auto Orb", function(state)
+    autoOrb = state
+
+    -- Crear GUI solo una vez
+    if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("hehe") then
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "hehe"
+        ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+        local lol = Instance.new("TextLabel")
+        lol.Name = "lol"
+        lol.Text = "Made By Sherya"
+        lol.Size = UDim2.new(0, 200, 0, 50)
+        lol.Position = UDim2.new(0.5, -100, 0, 10)
+        lol.BackgroundTransparency = 1
+        lol.TextColor3 = Color3.new(1, 1, 1)
+        lol.Parent = ScreenGui
+    end
+
+    task.spawn(function()
+        while autoOrb do
+            pcall(function()
+                for _, v in pairs(game.Workspace:GetChildren()) do
+                    if v.Name == "Drop" and v:IsA("BasePart") then
+                        v.CFrame = player.Character.HumanoidRootPart.CFrame
                     end
                 end
-            end
+            end)
             task.wait(1)
         end
     end)
-end
-
-local function stopAutoCollect()
-    autoCollectEnabled = false
-    if autoCollectLoop then
-        autoCollectLoop:Cancel()
-        autoCollectLoop = nil
-    end
-end
-
-mainTab:AddSwitch("Auto Orbes", function(enabled)
-    if enabled then
-        startAutoCollect()
-        print("Auto colección de orbes activada")
-    else
-        stopAutoCollect()
-        print("Auto colección de orbes desactivada")
-    end
 end)
 
--- Auto renacimiento toggle
+local autoRebirth = false
+
 mainTab:AddSwitch("Auto Renacimiento", function(state)
     autoRebirth = state
+
     task.spawn(function()
         while autoRebirth do
             pcall(function()
-                local gui = player:WaitForChild("PlayerGui")
-
-                local renacerButton = gui:FindFirstChild("RENACER", true)
-                if renacerButton and renacerButton:IsA("TextButton") then
-                    renacerButton:Activate()
-                    task.wait(0.3)
-                end
-
-                for _, obj in pairs(gui:GetDescendants()) do
-                    if obj:IsA("TextBox") and obj.PlaceholderText and obj.PlaceholderText:lower():find("type here") then
-                        obj.Text = "yes"
+                -- Buscar botón RENACER
+                for _, v in pairs(game:GetDescendants()) do
+                    if v:IsA("TextButton") and v.Text:lower():find("renacer") then
+                        v:FireClickDetector() -- Intentar usar FireClickDetector si aplica
+                        v:Activate()          -- En caso sea botón UI
+                        wait(0.5)
                     end
                 end
 
-                local confirmarBtn = gui:FindFirstChild("CONFIRMAR", true)
-                if confirmarBtn and confirmarBtn:IsA("TextButton") then
-                    confirmarBtn:Activate()
+                -- Buscar cuadro de confirmación
+                for _, v in pairs(game:GetDescendants()) do
+                    if v:IsA("TextBox") and v.PlaceholderText and v.PlaceholderText:lower():find("type here") then
+                        v.Text = "yes"
+                        wait(0.2)
+                    end
+
+                    if v:IsA("TextButton") and v.Text:lower():find("confirmar") then
+                        v:Activate()
+                    end
                 end
             end)
-            task.wait(6)
+            task.wait(5) -- Espera 5 segundos entre intentos de renacer (ajustable)
         end
     end)
 end)
