@@ -230,3 +230,46 @@ miscTab:AddButton("Anti AFK", function()
     end)
     print("Anti-AFK activado correctamente.")
 end)
+
+local autoFarmJugadores = false
+
+killerTab:AddSwitch("Auto Farm Jugadores", function(state)
+    autoFarmJugadores = state
+
+    task.spawn(function()
+        while autoFarmJugadores do
+            pcall(function()
+                for _, otherPlayer in pairs(game.Players:GetPlayers()) do
+                    if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        otherPlayer.Character.HumanoidRootPart.CFrame =
+                            player.Character.HumanoidRootPart.CFrame + Vector3.new(math.random(-5, 5), 0, math.random(-5, 5))
+                    end
+                end
+            end)
+            task.wait(0.5)
+        end
+    end)
+end)
+
+local autoPisotear = false
+
+killerTab:AddSwitch("Auto Pisoteo", function(state)
+    autoPisotear = state
+    task.spawn(function()
+        while autoPisotear do
+            pcall(function()
+                local char = player.Character or player.CharacterAdded:Wait()
+                local backpack = player:WaitForChild("Backpack")
+                local herramienta = char:FindFirstChild("Stomp") or backpack:FindFirstChild("Stomp")
+
+                if herramienta then
+                    if backpack:FindFirstChild("Stomp") then
+                        player.Character.Humanoid:EquipTool(herramienta)
+                    end
+                    herramienta:Activate()
+                end
+            end)
+            task.wait(0.2)
+        end
+    end)
+end)
