@@ -1,6 +1,6 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 local window = library:AddWindow("Sherya Script", {
@@ -10,15 +10,11 @@ local window = library:AddWindow("Sherya Script", {
 })
 
 local mainTab = window:AddTab("Main")
-local miscTab = window:AddTab("Misc")
-local killerTab = window:AddTab("Killer")
-local playersTab = window:AddTab("Players")
-local creditsTab = window:AddTab("Credits")
-
 mainTab:Show()
 
--- Auto Golpe --
+-- Auto Golpe toggle --
 local autoClick = false
+local clickConnection
 
 mainTab:AddToggle("Auto Golpe", function(state)
     autoClick = state
@@ -31,21 +27,22 @@ mainTab:AddToggle("Auto Golpe", function(state)
             tool.Parent = character
         end
 
-        task.spawn(function()
+        clickConnection = RunService.Heartbeat:Connect(function()
             local vim = game:GetService("VirtualInputManager")
-            while autoClick do
-                task.wait(0.1)
-                vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
-                vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
-            end
+            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
         end)
+    else
+        if clickConnection then
+            clickConnection:Disconnect()
+            clickConnection = nil
+        end
     end
 end)
 
--- Auto Atracción Orbes --
-local runService = game:GetService("RunService")
+-- Auto Atracción Orbes toggle --
 local autoAttract = false
-local connection
+local attractConnection
 
 local function getOrbFolder()
     return workspace:FindFirstChild("Orbs") or workspace:FindFirstChild("Collectibles")
@@ -55,7 +52,7 @@ local function toggleAttract(state)
     autoAttract = state
 
     if autoAttract then
-        connection = runService.Heartbeat:Connect(function()
+        attractConnection = RunService.Heartbeat:Connect(function()
             local character = player.Character
             if not character then return end
             local hrp = character:FindFirstChild("HumanoidRootPart")
@@ -73,9 +70,9 @@ local function toggleAttract(state)
             end
         end)
     else
-        if connection then
-            connection:Disconnect()
-            connection = nil
+        if attractConnection then
+            attractConnection:Disconnect()
+            attractConnection = nil
         end
     end
 end
