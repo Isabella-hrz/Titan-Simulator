@@ -17,41 +17,43 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
-local autoGolpe = false
 local player = game.Players.LocalPlayer
+local autoGolpe = false
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local RunService = game:GetService("RunService")
+local lastEquipTick = 0
+
+local function onCharacterAdded(newChar)
+    character = newChar
+    humanoid = character:WaitForChild("Humanoid")
+end
+player.CharacterAdded:Connect(onCharacterAdded)
 
 mainTab:AddSwitch("Auto Golpe", function(state)
     autoGolpe = state
+end)
 
-    if autoGolpe then
-        task.spawn(function()
-            local character = player.Character or player.CharacterAdded:Wait()
-            local humanoid = character:WaitForChild("Humanoid")
+RunService.Heartbeat:Connect(function()
+    if not autoGolpe then return end
 
-            humanoid.Died:Connect(function()
-                -- Cuando mueres, espera el nuevo personaje
-                character = player.CharacterAdded:Wait()
-                humanoid = character:WaitForChild("Humanoid")
-            end)
+    if tick() - lastEquipTick < 0.3 then return end
+    lastEquipTick = tick()
 
-            while autoGolpe do
-                pcall(function()
-                    local backpack = player:WaitForChild("Backpack")
-
-                    local herramienta = character:FindFirstChildOfClass("Tool") or backpack:FindFirstChildOfClass("Tool")
-
-                    if herramienta and herramienta.Parent ~= character then
-                        herramienta.Parent = character
-                    end
-
-                    if herramienta and herramienta.Parent == character then
-                        herramienta:Activate()
-                    end
-                end)
-                task.wait(0.1)
+    pcall(function()
+        local backpack = player:WaitForChild("Backpack")
+        local herramienta = character:FindFirstChild("autogolpe") or backpack:FindFirstChild("autogolpe")
+        if herramienta and herramienta.Parent ~= character then
+            if humanoid then
+                humanoid:EquipTool(herramienta)
             end
-        end)
-    end
+        end
+        if herramienta and herramienta.Parent == character then
+            herramienta:Activate()
+        end
+    end)
 end)
 
 local autoOrb = false
