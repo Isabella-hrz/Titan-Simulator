@@ -34,19 +34,38 @@ mainTab:AddSwitch("Auto Golpe", function(state)
     end)
 end)
 
--- AUTO ORB
 local autoOrb = false
+local orbGuiCreado = false
+
 mainTab:AddSwitch("Auto Orb", function(state)
     autoOrb = state
+
+    -- Solo crea el mensaje visual una vez
+    if not orbGuiCreado then
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "hehe"
+        screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+        local label = Instance.new("TextLabel")
+        label.Name = "lol"
+        label.Text = "Maked By Supernoob exploiter"
+        label.Size = UDim2.new(0, 200, 0, 50)
+        label.Position = UDim2.new(0, 10, 0, 10)
+        label.TextColor3 = Color3.new(1, 0, 1)
+        label.BackgroundTransparency = 1
+        label.Parent = screenGui
+
+        orbGuiCreado = true
+    end
+
+    -- Auto Orb loop
     task.spawn(function()
         while autoOrb do
-            pcall(function()
-                for _, orb in pairs(workspace:GetDescendants()) do
-                    if orb:IsA("BasePart") and orb.Name:lower():find("orb") then
-                        orb.CFrame = player.Character.HumanoidRootPart.CFrame
-                    end
+            for _, v in pairs(workspace:GetChildren()) do
+                if v.Name == "Drop" and v:IsA("BasePart") then
+                    v.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
                 end
-            end)
+            end
             task.wait(1)
         end
     end)
