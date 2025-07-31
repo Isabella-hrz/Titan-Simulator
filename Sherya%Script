@@ -90,34 +90,45 @@ mainTab:AddSwitch("Auto Orb", function(state)
     end)
 end)
 
--- AUTO RENACER
 local autoRebirth = false
-mainTab:AddSwitch("Auto Renacer", function(state)
+
+mainTab:AddSwitch("Auto Rebirth", function(state)
     autoRebirth = state
+
     task.spawn(function()
         while autoRebirth do
             pcall(function()
-                -- Paso 1: Clic en botón RENACER
-                local renacerBtn = player.PlayerGui:FindFirstChild("MainGUI") and player.PlayerGui.MainGUI:FindFirstChild("Rebirth")
-                if renacerBtn and renacerBtn.Visible then
-                    fireclickdetector(renacerBtn:FindFirstChildWhichIsA("ClickDetector"))
-                    task.wait(1)
-                end
+                local gui = player.PlayerGui
 
-                -- Paso 2: Escribir 'yes' en el cuadro de confirmación
-                local confirmarGui = player.PlayerGui:FindFirstChild("ConfirmGUI")
-                if confirmarGui and confirmarGui.Enabled then
-                    local inputBox = confirmarGui:FindFirstChildWhichIsA("TextBox", true)
-                    local confirmarBtn = confirmarGui:FindFirstChild("Confirmar", true)
-                    if inputBox and confirmarBtn then
-                        inputBox.Text = "yes"
-                        VirtualInputManager:SendKeyEvent(true, "Return", false, game)
-                        task.wait(0.3)
-                        fireclickdetector(confirmarBtn:FindFirstChildWhichIsA("ClickDetector"))
+                -- Buscar botones Rebirth (TextButton)
+                local buttons = {}
+                for _, obj in pairs(gui:GetDescendants()) do
+                    if obj:IsA("TextButton") and obj.Name == "Rebirth" then
+                        table.insert(buttons, obj)
                     end
                 end
+
+                -- Debemos tener 2 botones "Rebirth"
+                if #buttons >= 2 then
+                    -- Presionar el primer botón "Rebirth" para abrir panel
+                    buttons[1]:Activate()
+
+                    task.wait(0.5)
+
+                    -- Escribir "yes" en TextBox
+                    local textBox = gui:FindFirstChild("TextBox", true)
+                    if textBox and textBox:IsA("TextBox") then
+                        textBox.Text = "yes"
+                    end
+
+                    task.wait(0.5)
+
+                    -- Presionar el segundo botón "Rebirth" para confirmar
+                    buttons[2]:Activate()
+                end
             end)
-            task.wait(6)
+
+            task.wait(5) -- esperar 5 segundos antes de intentar de nuevo
         end
     end)
 end)
