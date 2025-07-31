@@ -1,9 +1,12 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+
 local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+player.CharacterAdded:Connect(function(c) char = c end)
 
 local window = library:AddWindow("Sherya Script", {
     main_color = Color3.fromRGB(200, 0, 255),
@@ -12,20 +15,17 @@ local window = library:AddWindow("Sherya Script", {
 })
 
 local mainTab = window:AddTab("Main")
-local miscTab = window:AddTab("Misc")
-local killerTab = window:AddTab("Killer")
-local playersTab = window:AddTab("Players")
-local creaditsTab = window:AddTab("Credits")
 
--- MAIN
+-- AUTO GOLPE
 local autoGolpe = false
 mainTab:AddSwitch("Auto Golpe", function(state)
     autoGolpe = state
     task.spawn(function()
         while autoGolpe do
             pcall(function()
-                local herramienta = player.Character and player.Character:FindFirstChildOfClass("Tool")
+                local herramienta = char:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
                 if herramienta then
+                    herramienta.Parent = char
                     herramienta:Activate()
                 end
             end)
@@ -34,119 +34,52 @@ mainTab:AddSwitch("Auto Golpe", function(state)
     end)
 end)
 
+-- AUTO ORB
 local autoOrb = false
-mainTab:AddSwitch("Auto Orbes", function(state)
+mainTab:AddSwitch("Auto Orb", function(state)
     autoOrb = state
     task.spawn(function()
         while autoOrb do
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("TouchTransmitter") and v.Parent.Name:lower():find("orb") then
-                    firetouchinterest(player.Character.HumanoidRootPart, v.Parent, 0)
-                    firetouchinterest(player.Character.HumanoidRootPart, v.Parent, 1)
+            pcall(function()
+                for _, orb in pairs(workspace:GetDescendants()) do
+                    if orb:IsA("BasePart") and orb.Name:lower():find("orb") then
+                        orb.CFrame = player.Character.HumanoidRootPart.CFrame
+                    end
                 end
-            end
-            task.wait(0.5)
+            end)
+            task.wait(1)
         end
     end)
 end)
 
+-- AUTO RENACER
 local autoRebirth = false
 mainTab:AddSwitch("Auto Renacer", function(state)
     autoRebirth = state
     task.spawn(function()
         while autoRebirth do
             pcall(function()
-                local button = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("RebirthUI")
-                if button then
-                    game:GetService("VirtualInputManager"):SendKeyEvent(true, "R", false, game)
+                -- Paso 1: Clic en botón RENACER
+                local renacerBtn = player.PlayerGui:FindFirstChild("MainGUI") and player.PlayerGui.MainGUI:FindFirstChild("Rebirth")
+                if renacerBtn and renacerBtn.Visible then
+                    fireclickdetector(renacerBtn:FindFirstChildWhichIsA("ClickDetector"))
+                    task.wait(1)
+                end
+
+                -- Paso 2: Escribir 'yes' en el cuadro de confirmación
+                local confirmarGui = player.PlayerGui:FindFirstChild("ConfirmGUI")
+                if confirmarGui and confirmarGui.Enabled then
+                    local inputBox = confirmarGui:FindFirstChildWhichIsA("TextBox", true)
+                    local confirmarBtn = confirmarGui:FindFirstChild("Confirmar", true)
+                    if inputBox and confirmarBtn then
+                        inputBox.Text = "yes"
+                        VirtualInputManager:SendKeyEvent(true, "Return", false, game)
+                        task.wait(0.3)
+                        fireclickdetector(confirmarBtn:FindFirstChildWhichIsA("ClickDetector"))
+                    end
                 end
             end)
-            task.wait(5)
+            task.wait(6)
         end
     end)
 end)
-
--- MISC
-miscTab:AddButton("Anti AFK", function()
-    player.Idled:Connect(function()
-        VirtualInputManager:SendKeyEvent(true, "W", false, game)
-        VirtualInputManager:SendKeyEvent(false, "W", false, game)
-    end)
-end)
-
-miscTab:AddSlider("Velocidad", function(value)
-    player.Character.Humanoid.WalkSpeed = value
-end, {
-    min = 16,
-    max = 200,
-    default = 16
-})
-
-local noclip = false
-miscTab:AddSwitch("No Clip", function(state)
-    noclip = state
-    RunService.Stepped:Connect(function()
-        if noclip then
-            for _, part in ipairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-        end
-    end)
-end)
-
-local flying = false
-miscTab:AddSwitch("Fly", function(state)
-    flying = state
-    if flying then
-        local bp = Instance.new("BodyPosition", player.Character.HumanoidRootPart)
-        local bg = Instance.new("BodyGyro", player.Character.HumanoidRootPart)
-        bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-        bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-        while flying and bp.Parent do
-            bp.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0, 5, 0)
-            task.wait()
-        end
-        bp:Destroy()
-        bg:Destroy()
-    end
-end)
-
-miscTab:AddButton("Chat Espía", function()
-    for _, plr in pairs(Players:GetPlayers()) do
-        plr.Chatted:Connect(function(msg)
-            print(plr.Name .. ": " .. msg)
-        end)
-    end
-end)
-
--- KILLER
-killerTab:AddButton("Atraer Jugadores y Pisotear", function()
-    local herramienta = player.Backpack:FindFirstChild("Pisotear") or player.Character:FindFirstChild("Pisotear")
-    if herramienta then
-        herramienta.Parent = player.Character
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= player and v.Character then
-                v.Character:MoveTo(player.Character.HumanoidRootPart.Position)
-            end
-        end
-    end
-end)
-
--- PLAYERS
-for _, plr in pairs(Players:GetPlayers()) do
-    playersTab:AddButton(plr.Name, function()
-        local stats = plr:FindFirstChild("leaderstats")
-        if stats then
-            local pwr = stats:FindFirstChild("Power") and stats.Power.Value or "N/A"
-            local rbs = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "N/A"
-            local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "N/A"
-            library:Notify("Stats de " .. plr.Name .. "\\nPoder: " .. pwr .. "\\nRenacer: " .. rbs .. "\\nKills: " .. kills)
-        end
-        workspace.CurrentCamera.CameraSubject = plr.Character:FindFirstChild("Humanoid")
-    end)
-end
-
--- CREDITS
-creaditsTab:AddLabel("Script made by isabella (sherya)")
