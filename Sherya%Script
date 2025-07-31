@@ -16,11 +16,11 @@ local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
 local creaditsTab = window:AddTab("Credits")
 
--- Variables de control
+-- Variables
 local autoEquipEnabled = false
 local autoClickEnabled = false
 local characterConnection
-local clickConnection
+local autoClickLoop = false
 
 -- Equipar herramienta "Golpe"
 local function equipGolpeTool()
@@ -32,7 +32,7 @@ local function equipGolpeTool()
     end
 end
 
--- Quitar herramienta "Golpe"
+-- Quitar herramienta
 local function unequipGolpeTool()
     local character = player.Character or player.CharacterAdded:Wait()
     local tool = character:FindFirstChild("Golpe")
@@ -41,30 +41,33 @@ local function unequipGolpeTool()
     end
 end
 
--- Activar autoclick interno
-local function startInternalAutoClick()
-    if clickConnection then return end
-    clickConnection = RunService.Heartbeat:Connect(function()
-        if UserInputService:GetFocusedTextBox() then return end -- no hacer nada si escribe
-        local character = player.Character
-        if character then
-            local tool = character:FindFirstChild("Golpe")
-            if tool and tool:IsA("Tool") then
-                tool:Activate() -- solo animación, no click físico
+-- AutoGolpe con delay (interno)
+local function startAutoGolpe()
+    autoClickLoop = true
+    task.spawn(function()
+        while autoClickLoop do
+            if UserInputService:GetFocusedTextBox() then
+                task.wait(0.5) -- espera mientras escribes
+            else
+                local character = player.Character
+                if character then
+                    local tool = character:FindFirstChild("Golpe")
+                    if tool and tool:IsA("Tool") then
+                        tool:Activate()
+                    end
+                end
+                task.wait(0.3) -- tiempo entre golpes (ajústalo si es necesario)
             end
         end
     end)
 end
 
--- Desactivar autoclick interno
-local function stopInternalAutoClick()
-    if clickConnection then
-        clickConnection:Disconnect()
-        clickConnection = nil
-    end
+-- Detener autoGolpe
+local function stopAutoGolpe()
+    autoClickLoop = false
 end
 
--- Equipar tras morir
+-- Al morir
 local function onCharacterAdded()
     if autoEquipEnabled then
         task.wait(0.5)
@@ -72,23 +75,23 @@ local function onCharacterAdded()
     end
 end
 
--- Switch principal
-mainTab:AddSwitch("Auto 'Golpe' + Equipar", function(enabled)
+-- Switch final
+mainTab:AddSwitch("Auto Golpe + Equip", function(enabled)
     autoEquipEnabled = enabled
     autoClickEnabled = enabled
 
     if enabled then
         equipGolpeTool()
-        startInternalAutoClick()
+        startAutoGolpe()
         characterConnection = player.CharacterAdded:Connect(onCharacterAdded)
-        print("Golpe activado")
+        print("AutoGolpe activado")
     else
         unequipGolpeTool()
-        stopInternalAutoClick()
+        stopAutoGolpe()
         if characterConnection then
             characterConnection:Disconnect()
             characterConnection = nil
         end
-        print("Golpe desactivado")
+        print("AutoGolpe desactivado")
     end
 end)
