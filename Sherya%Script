@@ -28,14 +28,13 @@ local autoCollectLoop
 local autoRebirth = false
 
 -- Funciones Auto Golpe Seguro
-
 local function equipFirstTool()
     local backpack = player:WaitForChild("Backpack")
     local character = player.Character or player.CharacterAdded:Wait()
-    local tool = backpack:FindFirstChildOfClass("Tool")
-    if tool then
-        tool.Parent = character
-        print("Equipando herramienta: "..tool.Name)
+    local firstTool = backpack:FindFirstChildOfClass("Tool")
+    if firstTool then
+        firstTool.Parent = character
+        print("Equipando herramienta: "..firstTool.Name)
         return true
     end
     return false
@@ -81,8 +80,8 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 end)
 
--- Auto golpe toggle
-mainTab:AddSwitch("Auto Golpe Seguro", function(state)
+-- Toggle Auto Golpe Seguro
+mainTab:AddSwitch("Auto Golpe", function(state)
     autoGolpe = state
 
     if state then
@@ -95,11 +94,12 @@ mainTab:AddSwitch("Auto Golpe Seguro", function(state)
                 local backpack = player:WaitForChild("Backpack")
 
                 local toolEquipped = character:FindFirstChildOfClass("Tool")
-                if not toolEquipped then
-                    local tool = backpack:FindFirstChildOfClass("Tool")
-                    if tool then
-                        tool.Parent = character
-                        print("Herramienta reequipada automáticamente")
+                local firstTool = backpack:FindFirstChildOfClass("Tool")
+
+                if not toolEquipped or (firstTool and toolEquipped ~= firstTool) then
+                    if firstTool then
+                        firstTool.Parent = character
+                        print("Equipando primera herramienta después de evolución")
                     end
                 end
                 task.wait(0.1)
@@ -139,7 +139,7 @@ local function stopAutoCollect()
     end
 end
 
-mainTab:AddSwitch("Auto Coleccionar Orbes", function(enabled)
+mainTab:AddSwitch("Auto Orbes", function(enabled)
     if enabled then
         startAutoCollect()
         print("Auto colección de orbes activada")
