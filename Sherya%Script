@@ -1,16 +1,50 @@
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library//main/Library", true))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
-local window = library:AddWindow("𝒮𝒽𝑒𝓇𝓎𝒶 𝒮𝒸𝓇𝒾𝓅𝓉", {
-    main_color = Color3.fromRGB(000, 000, 000),
+local window = library:AddWindow("Sherya Script", {
+    main_color = Color3.fromRGB(200, 0, 255),
     min_size = Vector2.new(660, 660),
     can_resize = false,
 })
 
-local farmTab = window:AddTab("𝐹𝒶𝓇𝓂")
-local miscTab = window:AddTab("𝑀𝒾𝓈𝒸")
-local killerTab = window:AddTab("𝒦𝒾𝓁𝓁𝑒𝓇")
-local playersTab = window:AddTab("𝒫𝓁𝒶𝓎𝑒𝓇𝓈")
-local creaditsTab = window:AddTab("𝒞𝓇𝑒𝒹𝒾𝓉")
+local mainTab = window:AddTab("Main")
+local miscTab = window:AddTab("Misc")
+local killerTab = window:AddTab("Killer")
+local playersTab = window:AddTab("Players")
+local creditsTab = window:AddTab("Credits")
+
+mainTab:Show()
+
+mainTab:AddLabel("Auto Golpe")
+
+-- Variable de control para iniciar/detener el autoclick
+local autoClick = false
+
+-- Botón para activar el autoclick
+mainTab:AddButton("Activar Auto Golpe", function()
+    autoClick = true
+    local backpack = player:WaitForChild("Backpack")
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    local tool = backpack:FindFirstChildOfClass("Tool")
+    if tool then
+        tool.Parent = character
+    end
+
+    local vim = game:GetService("VirtualInputManager")
+
+    task.spawn(function()
+        while autoClick do
+            task.wait(0.1)
+            vim:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+            vim:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+        end
+    end)
+end)
+
+-- Botón para detener el autoclick
+mainTab:AddButton("Detener Auto Golpe", function()
+    autoClick = false
+end)
