@@ -16,41 +16,45 @@ local window = library:AddWindow("Sherya Script", {
 
 local mainTab = window:AddTab("Main")
 
-local autoGolpe = false
+local autoPunch = false
 
-mainTab:AddSwitch("Auto Golpe", function(state)
-    autoGolpe = state
+-- Función para equipar la herramienta "Punch"
+local function equipPunch()
+    local backpack = player:WaitForChild("Backpack")
+    local character = player.Character or player.CharacterAdded:Wait()
+    local tool = backpack:FindFirstChild("Punch") or character:FindFirstChild("Punch")
+    if tool and tool.Parent ~= character then
+        tool.Parent = character
+        task.wait(0.2)
+    end
+end
 
-    local function equiparGolpe()
-        local mochila = player:WaitForChild("Backpack")
-        local herramienta = mochila:FindFirstChild("Golpe")
+-- Evento que detecta cuando el personaje reaparece para reequipo
+player.CharacterAdded:Connect(function()
+    if autoPunch then
+        task.wait(1) -- Espera que el personaje y mochila estén listos
+        equipPunch()
+    end
+end)
 
-        if herramienta then
-            herramienta.Parent = player.Character
-            task.wait(0.2) -- Esperar a que se equipe
-        end
+mainTab:AddSwitch("Auto Punch", function(state)
+    autoPunch = state
+
+    if autoPunch then
+        equipPunch()
     end
 
-    -- Detectar cuando el personaje respawnea (muere o evoluciona)
-    player.CharacterAdded:Connect(function()
-        if autoGolpe then
-            task.wait(1) -- Esperar a que cargue el personaje y mochila
-            equiparGolpe()
-        end
-    end)
-
     task.spawn(function()
-        while autoGolpe do
+        while autoPunch do
             pcall(function()
                 local character = player.Character or player.CharacterAdded:Wait()
-                local herramienta = character:FindFirstChild("Golpe") or player.Backpack:FindFirstChild("Golpe")
+                local tool = character:FindFirstChild("Punch")
 
-                if herramienta then
-                    if herramienta.Parent == player.Backpack then
-                        herramienta.Parent = character
-                        task.wait(0.2)
-                    end
-                    herramienta:Activate()
+                if tool then
+                    tool:Activate()
+                else
+                    -- Si no está equipada, intentar equipar
+                    equipPunch()
                 end
             end)
             task.wait(0.1)
