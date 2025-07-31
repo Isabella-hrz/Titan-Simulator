@@ -301,23 +301,36 @@ local function actualizarLista()
     playersTab:UpdateDropdown("Seleccionar Jugador", playersList)
 end
 
--- Crear dropdown con lista vacía inicialmente
-playersTab:AddDropdown("Seleccionar Jugador", {}, function(value)
+local selectedPlayer = nil
+local playersList = {}
+local dropdownJugador
+
+-- Crear dropdown vacío y guardarlo en una variable para poder actualizarlo
+dropdownJugador = playersTab:AddDropdown("Seleccionar Jugador", {}, function(value)
     selectedPlayer = value
 end)
 
--- Botón para refrescar la lista de jugadores
-playersTab:AddButton("Refrescar Lista", function()
+-- Función para actualizar la lista de jugadores
+local function actualizarLista()
+    playersList = {}
+    for _, p in pairs(game.Players:GetPlayers()) do
+        if p ~= game.Players.LocalPlayer then
+            table.insert(playersList, p.Name)
+        end
+    end
+    dropdownJugador:Update(playersList)
+end
+
+-- Botón para refrescar manualmente
+playersTab:AddButton("Refrescar Jugadores", function()
     actualizarLista()
-    library:Notify("Lista de jugadores actualizada")
 end)
 
--- Botón para ver stats
+-- Actualizar la lista automáticamente al iniciar
+actualizarLista()
+
+-- Ver estadísticas del jugador seleccionado
 playersTab:AddButton("Ver Stats del Jugador", function()
-    if not selectedPlayer then
-        library:Notify("Selecciona un jugador primero")
-        return
-    end
     local p = game.Players:FindFirstChild(selectedPlayer)
     if p and p:FindFirstChild("leaderstats") then
         local stats = p.leaderstats
@@ -325,44 +338,31 @@ playersTab:AddButton("Ver Stats del Jugador", function()
         local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "?"
         local renacer = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
 
-        library:Notify("Stats de "..p.Name.."\nPoder: "..poder.."\nKills: "..kills.."\nRebirths: "..renacer)
+        library:Notify("Stats de "..p.Name.."\n Poder: "..poder.."\n Kills: "..kills.."\n Rebirths: "..renacer)
     else
-        library:Notify("No se encontraron stats para "..selectedPlayer)
+        library:Notify("No se pudieron obtener las estadísticas.")
     end
 end)
 
--- Botón para espectear
+-- Espectear al jugador
 playersTab:AddButton("Espectear", function()
-    if not selectedPlayer then
-        library:Notify("Selecciona un jugador primero")
-        return
-    end
     local target = game.Players:FindFirstChild(selectedPlayer)
     if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-        workspace.CurrentCamera.CameraSubject = target.Character.Humanoid
-        library:Notify("Espectando a " .. selectedPlayer)
+        workspace.CurrentCamera.CameraSubject = target.Character:FindFirstChild("Humanoid")
     else
-        library:Notify("Jugador no disponible para espectear")
+        library:Notify("No se pudo espectear al jugador.")
     end
 end)
 
--- Botón para teletransportarse
+-- Teletransportarse al jugador
 playersTab:AddButton("Teletransportarse", function()
-    if not selectedPlayer then
-        library:Notify("Selecciona un jugador primero")
-        return
-    end
     local p = game.Players:FindFirstChild(selectedPlayer)
     if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            hrp.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
-            library:Notify("Teletransportado a " .. selectedPlayer)
+        local myChar = game.Players.LocalPlayer.Character
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
         end
     else
-        library:Notify("Jugador no disponible para teletransportarse")
+        library:Notify("No se pudo teletransportar.")
     end
 end)
-
--- Actualizar la lista al iniciar
-actualizarLista()
