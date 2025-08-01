@@ -331,72 +331,34 @@ killerTab:AddSwitch("Matar Jugadores (Demon Sword)", function(state)
     end)
 end)
 
-local selectedPlayerName = ""
+local player = game.Players.LocalPlayer
 
--- Input de texto para escribir el nombre del jugador
-playersTab:AddTextbox("Nombre del Jugador", "Escribe el nombre exacto", function(value)
-    selectedPlayerName = value
-end)
-
--- Ver estadísticas del jugador
-playersTab:AddButton("📊 Ver Stats", function()
-    local p = game.Players:FindFirstChild(selectedPlayerName)
-    if p and p:FindFirstChild("leaderstats") then
-        local stats = p.leaderstats
-        local poder = stats:FindFirstChild("Power") and stats.Power.Value or "?"
-        local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "?"
-        local rebirths = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
-
-        library:Notify("Stats de "..p.Name..
-            "\n Poder: "..poder..
-            "\n Kills: "..kills..
-            "\n Rebirths: "..rebirths)
-    else
-        library:Notify("Jugador no encontrado o sin stats.")
+for _, p in ipairs(game.Players:GetPlayers()) do
+    if p ~= player then
+        playersTab:AddButton("Teletransportarse a " .. p.Name, function()
+            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local myChar = player.Character
+                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                    myChar.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                    library:Notify("Teletransportado a " .. p.Name)
+                end
+            end
+        end)
     end
-end)
+end
 
--- Teletransportarse al jugador
-playersTab:AddButton("🚀 Teletransportarse", function()
-    local p = game.Players:FindFirstChild(selectedPlayerName)
-    if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-        local destino = p.Character.HumanoidRootPart.CFrame
-        local tuHRP = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if tuHRP then
-            tuHRP.CFrame = destino + Vector3.new(0, 2, 0)
-            library:Notify("Te teletransportaste a " .. p.Name)
-        end
-    else
-        library:Notify("Jugador no válido o sin personaje.")
-    end
-end)
-
--- Espectear
-playersTab:AddSwitch("🎥 Espectear Jugador", function(state)
-    local p = game.Players:FindFirstChild(selectedPlayerName)
-    if state then
-        if p and p.Character and p.Character:FindFirstChild("Humanoid") then
-            workspace.CurrentCamera.CameraSubject = p.Character:FindFirstChild("Humanoid")
-            library:Notify("Especteando a " .. p.Name)
-        else
-            library:Notify("No se puede espectear.")
-        end
-    else
-        local lp = game.Players.LocalPlayer
-        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-            workspace.CurrentCamera.CameraSubject = lp.Character:FindFirstChild("Humanoid")
-            library:Notify("Has vuelto a ti mismo.")
-        end
-    end
+-- Botón para refrescar los botones por si entran nuevos jugadores
+playersTab:AddButton("🔁 Refrescar Lista", function()
+    library:Notify("Reinicia el script para refrescar los jugadores.")
 end)
 
 creditsTab:AddLabel("╭──────────────────────────╮")
 creditsTab:AddLabel("  🌸 Script hecho por Isabella 🌸")
 creditsTab:AddLabel("╰──────────────────────────╯")
 
-creditsTab:AddLabel("-User de Roblox: MissSherya")
-creditsTab:AddLabel("-Instagram: Sherya_Luck")
-creditsTab:AddLabel("-TikTok: Sherya6000")
-creditsTab:AddLabel("-Discord: Isabella_hrz")
+creditsTab:AddLabel("User de Roblox: MissSherya")
+creditsTab:AddLabel("Instagram: Sherya_Luck")
+creditsTab:AddLabel("TikTok: Sherya6000")
+creditsTab:AddLabel("Discord: Isabella_hrz")
 
 creditsTab:AddLabel("Gracias por usar el script 💖")
