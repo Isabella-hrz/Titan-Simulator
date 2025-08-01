@@ -15,7 +15,7 @@ local mainTab = window:AddTab("Main")
 local miscTab = window:AddTab("Misc")
 local killerTab = window:AddTab("Killer")
 local playersTab = window:AddTab("Players")
-local creaditsTab = window:AddTab("Credits")
+local creditsTab = window:AddTab("Credits")
 
 local autoPunch = false
 
@@ -288,22 +288,58 @@ killerTab:AddSwitch("Auto Pisotear", function(state)
     end)
 end)
 
+local autoKill = false
+
+killerTab:AddSwitch("Matar Jugadores (Demon Sword)", function(state)
+    autoKill = state
+
+    task.spawn(function()
+        while autoKill do
+            pcall(function()
+                local lp = game.Players.LocalPlayer
+                local character = lp.Character or lp.CharacterAdded:Wait()
+                local humanoidRoot = character:FindFirstChild("HumanoidRootPart")
+
+                -- Equipar Demon Sword
+                local tool = character:FindFirstChild("Demon Sword") or lp.Backpack:FindFirstChild("Demon Sword")
+                if tool and not tool.Parent:IsA("Model") then
+                    tool.Parent = character
+                end
+
+                -- Asegúrate que esté equipada
+                if not character:FindFirstChild("Demon Sword") then return end
+
+                for _, p in ipairs(game.Players:GetPlayers()) do
+                    if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local enemyHRP = p.Character.HumanoidRootPart
+
+                        -- Teletransportarse cerca del jugador (evitar colisión directa)
+                        humanoidRoot.CFrame = enemyHRP.CFrame * CFrame.new(0, 0, 2)
+
+                        -- Atacar con Demon Sword
+                        local sword = character:FindFirstChild("Demon Sword")
+                        if sword then
+                            sword:Activate()
+                        end
+
+                        task.wait(0.3) -- Tiempo entre cada ataque
+                    end
+                end
+            end)
+            task.wait(1) -- Esperar un poco antes de repetir
+        end
+    end)
+end)
+
 local selectedPlayerName = ""
-local especteando = false
 
--- Label para mostrar stats (creamos un TextLabel en el UI)
-local statsLabel = Instance.new("TextLabel")
-statsLabel.Size = UDim2.new(1, 0, 0, 100)
-statsLabel.Position = UDim2.new(0, 0, 0, 300) -- ajusta según el layout
-statsLabel.BackgroundTransparency = 1
-statsLabel.TextColor3 = Color3.new(1,1,1)
-statsLabel.TextWrapped = true
-statsLabel.Font = Enum.Font.SourceSans
-statsLabel.TextSize = 18
-statsLabel.Parent = playersTab.Gui -- Asegúrate que esto apunta al contenedor correcto de playersTab
+-- Input de texto para escribir el nombre del jugador
+playersTab:AddTextbox("Nombre del Jugador", "Escribe el nombre exacto", function(value)
+    selectedPlayerName = value
+end)
 
--- Función para actualizar stats en el label
-local function actualizarStats()
+-- Ver estadísticas del jugador
+playersTab:AddButton("📊 Ver Stats", function()
     local p = game.Players:FindFirstChild(selectedPlayerName)
     if p and p:FindFirstChild("leaderstats") then
         local stats = p.leaderstats
@@ -311,55 +347,56 @@ local function actualizarStats()
         local kills = stats:FindFirstChild("Kills") and stats.Kills.Value or "?"
         local rebirths = stats:FindFirstChild("Rebirths") and stats.Rebirths.Value or "?"
 
-        statsLabel.Text = ("Stats de %s\n Poder: %s\n Kills: %s\n Rebirths: %s"):format(
-            p.Name, poder, kills, rebirths
-        )
+        library:Notify("Stats de "..p.Name..
+            "\n Poder: "..poder..
+            "\n Kills: "..kills..
+            "\n Rebirths: "..rebirths)
     else
-        statsLabel.Text = "No se encontró al jugador o no tiene estadísticas."
+        library:Notify("Jugador no encontrado o sin stats.")
     end
-end
-
--- TextBox para ingresar el nombre del jugador
-playersTab:AddTextbox("Nombre del Jugador", "", function(value)
-    selectedPlayerName = value
-    actualizarStats()
 end)
 
--- Switch para activar/desactivar especteo
-playersTab:AddSwitch("Espectear Jugador", function(state)
-    especteando = state
-
-    task.spawn(function()
-        while especteando do
-            local p = game.Players:FindFirstChild(selectedPlayerName)
-            if p and p.Character and p.Character:FindFirstChild("Humanoid") then
-                workspace.CurrentCamera.CameraSubject = p.Character.Humanoid
-            else
-                library:Notify("No se puede espectear al jugador.")
-                especteando = false
-                break
-            end
-            task.wait(0.1)
-        end
-
-        if not especteando then
-            local lp = game.Players.LocalPlayer
-            if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-                workspace.CurrentCamera.CameraSubject = lp.Character.Humanoid
-                library:Notify("Volviste a ti mismo.")
-            end
-        end
-    end)
-end)
-
--- Botón para teletransportarse al jugador
-playersTab:AddButton("Teletransportarse", function()
+-- Teletransportarse al jugador
+playersTab:AddButton("🚀 Teletransportarse", function()
     local p = game.Players:FindFirstChild(selectedPlayerName)
     if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame =
-            p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
-        library:Notify("Te teletransportaste a "..p.Name)
+        local destino = p.Character.HumanoidRootPart.CFrame
+        local tuHRP = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if tuHRP then
+            tuHRP.CFrame = destino + Vector3.new(0, 2, 0)
+            library:Notify("Te teletransportaste a " .. p.Name)
+        end
     else
-        library:Notify("No se pudo teletransportar.")
+        library:Notify("Jugador no válido o sin personaje.")
     end
 end)
+
+-- Espectear
+playersTab:AddSwitch("🎥 Espectear Jugador", function(state)
+    local p = game.Players:FindFirstChild(selectedPlayerName)
+    if state then
+        if p and p.Character and p.Character:FindFirstChild("Humanoid") then
+            workspace.CurrentCamera.CameraSubject = p.Character:FindFirstChild("Humanoid")
+            library:Notify("Especteando a " .. p.Name)
+        else
+            library:Notify("No se puede espectear.")
+        end
+    else
+        local lp = game.Players.LocalPlayer
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            workspace.CurrentCamera.CameraSubject = lp.Character:FindFirstChild("Humanoid")
+            library:Notify("Has vuelto a ti mismo.")
+        end
+    end
+end)
+
+creditsTab:AddLabel("╭──────────────────────────╮")
+creditsTab:AddLabel("  🌸 Script hecho por Isabella 🌸")
+creditsTab:AddLabel("╰──────────────────────────╯")
+
+creditsTab:AddLabel("-User de Roblox: MissSherya")
+creditsTab:AddLabel("-Instagram: Sherya_Luck")
+creditsTab:AddLabel("-TikTok: Sherya6000")
+creditsTab:AddLabel("-Discord: Isabella_hrz")
+
+creditsTab:AddLabel("Gracias por usar el script 💖")
