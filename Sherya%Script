@@ -1,3 +1,25 @@
+local whitelist = {
+    ["MissSherya"] = true,
+    ["luis_109170"] = true,
+    ["JohanAxelRS"] = true,
+    ["elpepeandasuelto300"] = true,
+    ["Alexqwq124"] = true,
+    ["Cesar0_o1"] = true,
+}
+
+local localPlayer = game.Players.LocalPlayer
+
+if not whitelist[localPlayer.Name] then
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Acceso Denegado",
+        Text = "No estás autorizado para usar este script.",
+        Duration = 10
+    })
+
+    -- Opcional: terminar ejecución
+    return
+end
+
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -335,7 +357,7 @@ local player = game.Players.LocalPlayer
 
 for _, p in ipairs(game.Players:GetPlayers()) do
     if p ~= player then
-        playersTab:AddButton("Teletransportarse a " .. p.Name, function()
+        playersTab:AddButton("Teleport" .. p.Name, function()
             if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                 local myChar = player.Character
                 if myChar and myChar:FindFirstChild("HumanoidRootPart") then
@@ -346,11 +368,6 @@ for _, p in ipairs(game.Players:GetPlayers()) do
         end)
     end
 end
-
--- Botón para refrescar los botones por si entran nuevos jugadores
-playersTab:AddButton("🔁 Refrescar Lista", function()
-    library:Notify("Reinicia el script para refrescar los jugadores.")
-end)
 
 creditsTab:AddLabel("╭──────────────────────────╮")
 creditsTab:AddLabel("  🌸 Script hecho por Isabella 🌸")
